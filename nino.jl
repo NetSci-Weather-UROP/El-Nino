@@ -1,6 +1,6 @@
 #!/usr/bin/env julia
 
-using HDF5, Dates
+using HDF5, Dates, StatsBase
 
 """
 Convert NCEP dates to the actual date.

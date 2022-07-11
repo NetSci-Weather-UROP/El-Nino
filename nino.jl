@@ -30,3 +30,8 @@ function find_inside_indeces(lat, lon, x0, x1, y1, y2) # Find indeces for points
 
     return i0:i1, j0:j1
 end
+
+function cross_correlation(x, y)
+    # Check if this looks right to you
+    return (mean(x .* y) - mean(x) * mean(y)) /  std(x) / std(y)
+end

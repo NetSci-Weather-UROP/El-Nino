@@ -3,13 +3,15 @@
 include("./nino.jl")
 
 function main()
-    data = get_data()
-    anomaly_data, lat, lon=get_anomaly(data)
+    data, lat, lon = get_data()
+    anomaly_data = get_anomaly(data)
 	display(anomaly_data[1:1000])
 
-    enb_i, enb_j = find_inside_indeces(lat, lon, 120, 170, 5, -5)
-    display(enb_i, enb_j)
+    enb_is, enb_js = find_inside_indeces(lat, lon, 120, 170, 5, -5)
+    display(enb_is, enb_js)
+
     
+
     return 0
 end
 

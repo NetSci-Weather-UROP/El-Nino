@@ -77,5 +77,12 @@ function get_anomaly(data; years=1948:2022, radial_period=4, scale=true)
         end
         wait.(t)
     end
-    return out, lat, lon
+    return out
+end
+
+function c_i_j(data, is, js)
+    size_A = size(data)
+    interior_points = length(is)*length(js)
+    exterior_points = size_A[1] * size_A[2] - interior_points
+    C = Array{Float32}(undef, interior_points, exterior_points)
 end

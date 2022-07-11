@@ -45,8 +45,8 @@ function findmissing(x)
 end
 
 function get_anomaly(;years=1948:2022, radial_period=4, scale=true)
-    A = read_air_data[years[1]]
-    size_A = size(A)
+    A = read_air_data(years[1])
+    size_A = size(read(A["air"]))
     close(A)
     # This is a bit silly but it should work (Allocating > 1 GB of data)
     data = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))

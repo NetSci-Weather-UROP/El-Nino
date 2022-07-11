@@ -23,11 +23,9 @@ function find_inside_indeces(lat, lon, x0, x1, y0, y1) # Find indeces for points
     # I think this works
     x0 < 0 ? x0 += 360 : nothing
     x1 < 0 ? x1 += 360 : nothing
-    y0 < 0 ? y0 += 360 : nothing
-    y1 < 0 ? y1 += 360 : nothing
     
-    i0 = findfirst(x -> x > x0, lon)
-    i1 = findfirst(x -> x < x1, lon)
+    i0 = findfirst(x -> x >= x0, lon)
+    i1 = findfirst(x -> x > x1, lon)-1
     
     if x1 >= x0
         is=i0:i1
@@ -35,8 +33,8 @@ function find_inside_indeces(lat, lon, x0, x1, y0, y1) # Find indeces for points
         is=[ 1:x1 ; x0:length(lon) ]
     end
 
-    j0 = findfirst(y -> y > y0, lat)
-    j1 = findfirst(y -> y < y1, lat)
+    j0 = findfirst(y -> y < y0, lat)+1
+    j1 = findfirst(y -> y <= y1, lat)
 
     if y1 >= y0
         js=j0:j1

@@ -47,6 +47,8 @@ end
 function get_data(;years=1948:2022)
     A = read_air_data(years[1])
     size_A = size(read(A["air"]))
+    lat = read(A["lat"])
+    lon = read(A["lon"])
     close(A)
     # This is a bit silly but it should work (Allocating > 1 GB of data)
     data = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
@@ -55,12 +57,11 @@ function get_data(;years=1948:2022)
         data[:,:,:,i] .= findmissing.(read(A["air"]))[:,:,1:365] # Discard Leap Years (:
         close(A)
     end
-    return data
+    return data, lat, lon
 end
 
-function get_anomaly(;years=1948:2022, radial_period=4, scale=true)
+function get_anomaly(data; years=1948:2022, radial_period=4, scale=true)
     # This is a bit silly again. We can do this on a GPU for a speedup though.
-    data = get_data(;years=years)
     size_A = size(data)
 
     out = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
@@ -76,5 +77,5 @@ function get_anomaly(;years=1948:2022, radial_period=4, scale=true)
         end
         wait.(t)
     end
-    return out 
+    return out, lat, lon
 end

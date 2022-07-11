@@ -1,6 +1,9 @@
 #!/usr/bin/env julia
-using Pkg
-Pkg.add.(["HDF5","StatsBase"])
+
+module OurNino
+
+export get_data, get_anomaly, find_inside_indeces
+
 using HDF5, Dates, StatsBase
 
 """
@@ -85,4 +88,5 @@ function c_i_j(data, is, js)
     interior_points = length(is)*length(js)
     exterior_points = size_A[1] * size_A[2] - interior_points
     C = Array{Float32}(undef, interior_points, exterior_points)
+end
 end

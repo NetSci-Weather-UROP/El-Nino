@@ -1,6 +1,10 @@
 #!/usr/bin/env julia
 
+using Pkg
+Pkg.add.(["HDF5","StatsBase"])
+
 include("./nino.jl")
+using .OurNino
 
 function main()
     data, lat, lon = get_data()

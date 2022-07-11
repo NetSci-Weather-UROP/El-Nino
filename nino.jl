@@ -1,5 +1,6 @@
 #!/usr/bin/env julia
-
+using Pkg
+Pkg.add.(["HDF5","StatsBase"])
 using HDF5, Dates, StatsBase
 
 """

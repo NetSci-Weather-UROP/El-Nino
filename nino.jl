@@ -52,7 +52,7 @@ function get_anomaly(;years=1948:2022, radial_period=4, scale=true)
     data = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
     for i in 1:length(years)
         A = read_air_data(years[i])
-        data[:,:,:,i] .= findmissing.(read(A["air"]))[1:365] # Discard Leap Years (:
+        data[:,:,:,i] .= findmissing.(read(A["air"]))[:,:,1:365] # Discard Leap Years (:
         close(A)
     end
 

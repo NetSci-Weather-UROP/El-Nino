@@ -4,7 +4,7 @@ pipeline {
         stage('Run') {
             steps {
 				step([$class: 'GitHubSetCommitStatusBuilder'])
-                sh 'exec ./nino.jl'
+                sh 'julia -t 1 -O 3 -C native ./main.jl'
             }
         }
     }

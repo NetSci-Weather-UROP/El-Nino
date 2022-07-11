@@ -33,8 +33,8 @@ function find_inside_indeces(lat, lon, x0, x1, y0, y1) # Find indeces for points
         is=[ 1:x1 ; x0:length(lon) ]
     end
 
-    j0 = findfirst(y -> y < y0, lat)+1
-    j1 = findfirst(y -> y <= y1, lat)
+    j1 = findfirst(y -> y < y0, lat)+1
+    j0 = findfirst(y -> y <= y1, lat)
 
     if y1 >= y0
         js=j0:j1

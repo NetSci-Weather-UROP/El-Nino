@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Run') {
             steps {
-                sh 'nino.jl'
+                sh 'exec nino.jl'
             }
         }
     }

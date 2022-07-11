@@ -4,7 +4,7 @@ pipeline {
 		stage('Setup') {
 			steps {
 				step([$class: 'GitHubSetCommitStatusBuilder'])
-				sh 'ln -s ~/air.sig995 .'
+				sh '[ -e air.sig995 ] || ln -s ~/air.sig995 .'
 			}
 		}
         stage('Run') {

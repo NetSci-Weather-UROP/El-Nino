@@ -36,7 +36,31 @@ function cross_correlation(x, y)
     return (mean(x .* y) - mean(x) * mean(y)) /  std(x) / std(y)
 end
 
-function main()
+function findmissing(x)
+    if x < 0 # Less than 0 Kelvin
+        return NaN32
+    else
+        return x
+    end
+end
 
-    return 0
+function get_anomaly(;years=1948:2022 radial_period=4, scale=True)
+    A = read_air_data[years[1]]
+    size_A = size(A)
+    close(A)
+    # This is a bit silly but it should work (Allocating > 1 GB of data)
+    data = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
+    for i in 1:length(years)
+        A = read_air_data(years[i])
+        data[:,:,:,i] .= findmissing.(read(A["air"]))[1:365] # Discard Leap Years (:
+        close(A)
+    end
+
+    out = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
+    for i in 1:length(years)
+        local_period = intersect(years, (i-radial_period):(i+radial_period))
+        year_means = mean(data[:,:,:,local_period],dims=4)
+        out[:,:,:,i] .-= year_means
+    end
+    return out 
 end

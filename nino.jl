@@ -44,7 +44,7 @@ function findmissing(x)
     end
 end
 
-function get_anomaly(;years=1948:2022, radial_period=4, scale=true)
+function get_data(;years=1948:2022)
     A = read_air_data(years[1])
     size_A = size(read(A["air"]))
     close(A)
@@ -55,12 +55,26 @@ function get_anomaly(;years=1948:2022, radial_period=4, scale=true)
         data[:,:,:,i] .= findmissing.(read(A["air"]))[:,:,1:365] # Discard Leap Years (:
         close(A)
     end
+    return data
+end
+
+function get_anomaly(;years=1948:2022, radial_period=4, scale=true)
+    # This is a bit silly again. We can do this on a GPU for a speedup though.
+    data = get_data(;years=years)
+    size_A = size(data)
 
     out = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
     for i in 1:length(years)
-        local_period = intersect(years, (i-radial_period):(i+radial_period))
-        year_means = mean(data[:,:,:,local_period],dims=4)
-        out[:,:,:,i] .-= year_means
+        local_period = intersect(1:length(years), (i-radial_period):(i+radial_period))
+        t = Array{Task}(undef,size_A[1])
+        for j in 1:size_A[1]
+            t[j] = Threads.@spawn for k in 1:size_A[2]
+                for l in 1:365
+                    out[j,k,l,i] = data[j,k,l,i] - mean(filter(x->x!=NaN32,data[j,k,l,local_period]))
+                end
+            end
+        end
+        wait.(t)
     end
     return out 
 end

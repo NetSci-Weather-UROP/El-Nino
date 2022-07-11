@@ -41,9 +41,9 @@ function find_inside_indeces(lat, lon, x0, x1, y0, y1) # Find indeces for points
     if y1 >= y0
         js=j0:j1
     else
-        js=[1:j1 ; j0:length(lat)]
+        js=[ 1:j1 ; j0:length(lat) ]
     end
-    
+
     return is, js
 end
 

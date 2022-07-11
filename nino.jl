@@ -44,7 +44,7 @@ function findmissing(x)
     end
 end
 
-function get_anomaly(;years=1948:2022 radial_period=4, scale=True)
+function get_anomaly(;years=1948:2022, radial_period=4, scale=True)
     A = read_air_data[years[1]]
     size_A = size(A)
     close(A)

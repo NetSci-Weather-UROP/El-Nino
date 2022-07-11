@@ -28,10 +28,23 @@ function find_inside_indeces(lat, lon, x0, x1, y0, y1) # Find indeces for points
     
     i0 = findfirst(x -> x > x0, lon)
     i1 = findfirst(x -> x < x1, lon)
+    
+    if x1 >= x0
+        is=i0:i1
+    else
+        is=[ 1:x1 ; x0:length(lon) ]
+    end
+
     j0 = findfirst(y -> y > y0, lat)
     j1 = findfirst(y -> y < y1, lat)
 
-    return i0:i1, j0:j1
+    if y1 >= y0
+        js=j0:j1
+    else
+        js=[1:j1 ; j0:length(lat)]
+    end
+    
+    return is, js
 end
 
 function cross_correlation(x, y)

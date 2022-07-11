@@ -11,7 +11,7 @@ function main()
     anomaly_data = get_anomaly(data)
 	display(anomaly_data[1:1000])
 
-    enb_is, enb_js = find_inside_indeces(lat, lon, 120, 170, 5, -5)
+    enb_is, enb_js = find_inside_indeces(lat, lon, 120, 170, -5, 5)
 	println()
     println(enb_is)
     println(enb_js)

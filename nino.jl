@@ -35,3 +35,8 @@ function cross_correlation(x, y)
     # Check if this looks right to you
     return (mean(x .* y) - mean(x) * mean(y)) /  std(x) / std(y)
 end
+
+function main()
+
+    return 0
+end

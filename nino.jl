@@ -58,7 +58,7 @@ function findmissing(x)
     end
 end
 
-function get_data(;years=1948:2022)
+function get_data(;years=1948:2021)
     A = read_air_data(years[1])
     size_A = size(read(A["air"]))
     lat = read(A["lat"])

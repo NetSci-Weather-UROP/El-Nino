@@ -21,7 +21,7 @@ function main()
     C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)
 	println(C[1:100])
 
-    h5open("generated_data.h5", "w") do file
+    OurNino.HDF5.h5open("generated_data.h5", "w") do file
         OurNino.HDF5.@write file C
         OurNino.HDF5.@write file i_point_list
         OurNino.HDF5.@write file e_point_list

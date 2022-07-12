@@ -64,7 +64,7 @@ function get_data(;years=1948:2022)
     lat = read(A["lat"])
     lon = read(A["lon"])
     close(A)
-    # This is a bit silly but it should work (Allocating > 1 GB of data)
+    # This is a bit silly but it should work
     data = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
     for i in 1:length(years)
         A = read_air_data(years[i])

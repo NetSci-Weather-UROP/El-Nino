@@ -18,7 +18,8 @@ function main()
     println(enb_js)
 
     window = get_period(data, 11, 1) 
-    println(c_i_j(window, enb_is, enb_js)[1,2])
+    C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)
+    println(C[1,2])
 
     return 0
 end

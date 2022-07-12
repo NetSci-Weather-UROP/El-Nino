@@ -58,7 +58,7 @@ function findmissing(x)
     end
 end
 
-function get_data(;years=1948:2021)
+function get_data(;years=1948:2022)
     A = read_air_data(years[1])
     size_A = size(read(A["air"]))
     lat = read(A["lat"])
@@ -74,7 +74,7 @@ function get_data(;years=1948:2021)
     return data, lat, lon
 end
 
-function get_anomaly(data; years=1948:2022, radial_period=4, scale=true)
+function get_anomaly(data; years=1948:2021, radial_period=4, scale=true)
     # This is a bit silly again. We can do this on a GPU for a speedup though.
     size_A = size(data)
 

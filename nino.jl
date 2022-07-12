@@ -115,26 +115,27 @@ function c_i_j(data, is, js)
     size_A = size(data)
     interior_points = length(is)*length(js)
     exterior_points = size_A[1] * size_A[2] - interior_points
-    C = Array{Vector{Float32}}(undef, interior_points, exterior_points)
+    C = Array{Float32}(undef, interior_points, exterior_points, length(200:-1:50))
 
     i_point_list = [(i,j) for i in is for j in js]
     e_point_list = [(i,j) for i in 1:size_A[1] for j in 1:size_A[2]]
     e_point_list = setdiff(e_point_list, i_point_list)
 
+    t = Vector{Task}(undef, length(i_point_list))
+
     for i in 1:length(i_point_list)
-        for j in 1:length(e_point_list)
+        t[i] = Threads.@spawn for j in 1:length(e_point_list)
             x1 = i_point_list[i]
             x2 = e_point_list[j]
-            t = Vector{Task}(undef, length(200:-1:50))
             for d in (200:-1:50) .- 49
-                t[d] = Threads.@spawn cross_correlation(
+                C[i,j, d] = cross_correlation(
                     data[x1[1], x1[2], 200:(200+364)],
                     data[x2[1], x2[2], d:(d+364)]
                 )
             end
-            C[i,j] = fetch.(t)
         end
     end
+    wait.(t)
     return C, i_point_list, e_point_list
 end
 end

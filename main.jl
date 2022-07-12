@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 
 using Pkg
-Pkg.add.(["HDF5","StatsBase"])
+Pkg.add.(["HDF5","StatsBase","LoopVectorization"])
 
 include("./nino.jl")
 using .OurNino
@@ -19,7 +19,7 @@ function main()
 
     window = get_period(data, 11, 1) 
     C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)
-    println(C[1,2])
+    println(C)
 
     return 0
 end

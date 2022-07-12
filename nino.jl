@@ -134,6 +134,10 @@ function c_i_j(data, is, js)
                 )
             end
         end
+        if mod(i,20) == 0
+            wait.(t[1:i])
+            GC.gc()
+        end 
     end
     wait.(t)
     return C, i_point_list, e_point_list

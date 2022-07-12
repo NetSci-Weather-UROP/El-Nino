@@ -95,16 +95,17 @@ function get_anomaly(data; years=1948:2021, radial_period=4, scale=true)
 end
 
 function get_period(data, y, d)
+    size_A = size(data)
     local_data = Array{Float32}(undef, size_A[1], size_A[2], 365 + 200) 
-    local_data[1:length(d:365)] .= data[:,:,d:365,y]
+    local_data[:, :, 1:length(d:365)] .= data[:,:,d:365,y]
     
     filled_count = length(d:365)
     while filled_count < 365 + 200
         y+=1
         next_index = 365 + 200 - filled_count
-        next_index > 365 ? nx = 365 : nothing
+        next_index > 365 ? next_index = 365 : nothing
 
-        local_data[(filled_count+1):(filled_count+nx)] .= data[:,:,1:nx,y]
+        local_data[:, :, (filled_count+1):(filled_count+next_index)] .= data[:,:,1:next_index,y]
         filled_count += next_index
     end
     return local_data
@@ -114,7 +115,7 @@ function c_i_j(data, is, js)
     size_A = size(data)
     interior_points = length(is)*length(js)
     exterior_points = size_A[1] * size_A[2] - interior_points
-    C = Array{Array{Float32}(151)}(undef, interior_points, exterior_points)
+    C = Array{Array{Float32}}(undef, interior_points, exterior_points)
 
     i_point_list = [(i,j) for i in is for j in js]
     e_point_list = [(i,j) for i in 1:size_A[1] for j in 1:size_A[2]]

@@ -16,7 +16,8 @@ function main()
     println(enb_is)
     println(enb_js)
 
-    
+    window = get_period(data, 35, 1) 
+    println(c_i_j(window, enb_is, enb_js)[1,2])
 
     return 0
 end

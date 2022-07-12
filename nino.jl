@@ -2,7 +2,7 @@
 
 module OurNino
 
-export get_data, get_anomaly, find_inside_indeces, c_i_j
+export get_data, get_anomaly, find_inside_indeces, get_period, c_i_j
 
 using HDF5, Dates, StatsBase
 

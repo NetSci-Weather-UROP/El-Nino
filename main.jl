@@ -21,6 +21,16 @@ function main()
     C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)
 	println(C[1:100])
 
+    h5open("generated_data.h5", "w") do file
+        @write file C
+        @write file i_point_list
+        @write file e_point_list
+        @write file enb_is
+        @write file enb_js
+        @write file anomaly_data
+        @write file lat
+        @write file lon
+        @write file years
     return 0
 end
 

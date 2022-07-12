@@ -58,7 +58,7 @@ function findmissing(x)
     end
 end
 
-function get_data(;years=1948:2022)
+function get_data(;years=1948:2021)
     A = read_air_data(years[1])
     size_A = size(read(A["air"]))
     lat = read(A["lat"])
@@ -92,22 +92,6 @@ function get_anomaly(data; years=1948:2021, radial_period=4, scale=true)
         wait.(t)
     end
     return out
-end
-
-function get_period(data, y, d)
-    local_data = Array{Float32}(undef, size_A[1], size_A[2], 365 + 200) 
-    local_data[1:length(d:365)] .= data[:,:,d:365,y]
-    
-    filled_count = length(d:365)
-    while filled_count < 365 + 200
-        y+=1
-        next_index = 365 + 200 - filled_count
-        next_index > 365 ? nx = 365 : nothing
-
-        local_data[(filled_count+1):(filled_count+nx)] .= data[:,:,1:nx,y]
-        filled_count += next_index
-    end
-    return local_data
 end
 
 function c_i_j(data, is, js)

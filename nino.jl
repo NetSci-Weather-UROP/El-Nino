@@ -4,7 +4,7 @@ module OurNino
 
 export get_data, get_anomaly, find_inside_indeces, get_period, c_i_j
 
-using HDF5, Dates, StatsBase
+using HDF5, Dates, StatsBase, LoopVectorization
 
 """
 Convert NCEP dates to the actual date.
@@ -47,7 +47,7 @@ end
 
 function cross_correlation(x, y)
     # Check if this looks right to you
-    return (mean(x .* y) - mean(x) * mean(y)) /  std(x) / std(y)
+    return @turbo (mean(x .* y) - mean(x) * mean(y)) /  std(x) / std(y)
 end
 
 function findmissing(x)
@@ -115,7 +115,7 @@ function c_i_j(data, is, js)
     size_A = size(data)
     interior_points = length(is)*length(js)
     exterior_points = size_A[1] * size_A[2] - interior_points
-    C = Array{Array{Float32}}(undef, interior_points, exterior_points)
+    C = Array{Vector{Float32}}(undef, interior_points, exterior_points)
 
     i_point_list = [(i,j) for i in is for j in js]
     e_point_list = [(i,j) for i in 1:size_A[1] for j in 1:size_A[2]]
@@ -125,12 +125,14 @@ function c_i_j(data, is, js)
         for j in 1:length(e_point_list)
             x1 = i_point_list[i]
             x2 = e_point_list[j]
-            C[i,j] = [
-                cross_correlation(
+            t = Vector{Task}(undef, length(200:-1:50))
+            for d in (200:-1:50) .- 49
+                t[d] = Threads.@spawn cross_correlation(
                     data[x1[1], x1[2], 200:(200+364)],
                     data[x2[1], x2[2], d:(d+364)]
-                ) for d in 200:-1:50
-                ]
+                )
+            end
+            C[i,j] = fetch.(t)
         end
     end
     return C, i_point_list, e_point_list

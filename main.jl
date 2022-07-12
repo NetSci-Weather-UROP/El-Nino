@@ -23,14 +23,14 @@ function main()
 
     OurNino.HDF5.h5open("generated_data.h5", "w") do file
         OurNino.HDF5.@write file C
-        OurNino.HDF5.@write file i_point_list
-        OurNino.HDF5.@write file e_point_list
-        OurNino.HDF5.@write file enb_is
-        OurNino.HDF5.@write file enb_js
+		OurNino.HDF5.@write file hcat(first.(i_point_list),last.(i_point_list))
+		OurNino.HDF5.@write file hcat(first.(e_point_list),last.(e_point_list))
+		OurNino.HDF5.@write file Array(enb_is)
+		OurNino.HDF5.@write file Array(enb_js)
         OurNino.HDF5.@write file anomaly_data
         OurNino.HDF5.@write file lat
         OurNino.HDF5.@write file lon
-        OurNino.HDF5.@write file years
+		OurNino.HDF5.@write file Array(years)
     end
 
     return 0

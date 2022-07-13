@@ -34,16 +34,12 @@ function main()
 
     for i in 1:size(e_point_list)[1]
         for j in 1:size(i_point_list)[1]
-            #println("i:",i)
-            #println("j:",j)
-            i_point = i_point_list[j,:]
-            in_C[i_point[1], i_point[2]]=100
+
+            #i_point = i_point_list[j,:]
+            #in_C[i_point[1], i_point[2]]=100
             
             e_point = e_point_list[i,:]
-            #println(H(θ[j,i]))
-            #println(e_point[1])
-            #println(e_point[2])
-            #println(in_C[e_point[1], e_point[2]])
+
             H(θ[j,i])
             in_C[e_point[1], e_point[2]]
             in_C[e_point[1], e_point[2]] += H(θ[j,i]) 

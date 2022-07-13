@@ -42,10 +42,10 @@ function main()
 
             H(θ[j,i])
             in_C[e_point[1], e_point[2]]
-            in_C[e_point[1], e_point[2]] += H(θ[j,i]) 
+            in_C[e_point[1], e_point[2]] += θ[j,i] 
         end
     end
-    close(generated_data)
+    
 
     fig = Figure()
 
@@ -55,10 +55,17 @@ function main()
 	)
 
     plt = surface!(ga, lon, lat, in_C; shading=false, colormap=:inferno)
+    
+    #anomaly_data = read(generated_data["anomaly_data"])
+    #plt = surface!(ga, lon, lat, anomaly_data[:,:,1,11]; shading=false, colormap=:inferno)
+    
+    #plt2 = plot!(ga,Point2f(-170,-5),Point2f(-120,5))
+    #xlims!(ga,-90,90)
     cb = Colorbar(fig[1,2], plt)
 
-    return C, lat, lon, i_point_list, e_point_list, in_C, fig
+    close(generated_data)
+    return C, lat, lon, i_point_list, e_point_list, in_C, fig, ga
 end
 
-C, lat, lon, i_point_list, e_point_list, in_C, fig = main()
+C, lat, lon, i_point_list, e_point_list, in_C, fig, ga = main()
 fig

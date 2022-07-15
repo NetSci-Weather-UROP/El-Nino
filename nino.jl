@@ -58,6 +58,19 @@ function findmissing(x)
     end
 end
 
+function mean_air_data(A)
+    size_A = size(A)
+    out = Array{Float32}(undef, size_A[1], size_A[2], 365)
+    @inbounds @fastmath (for i in 1:size_A[1]
+        for j in 1:size_A[2]
+            for k in 1:365
+                out[i,j,k]  = mean(findmissing.(A[i,j,(4k-3):(4k)]))
+            end
+        end
+    end)
+    return out
+end
+
 function get_data(;years=1948:2021)
     A = read_air_data(years[1])
     size_A = size(read(A["air"]))
@@ -68,7 +81,7 @@ function get_data(;years=1948:2021)
     data = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
     for i in 1:length(years)
         A = read_air_data(years[i])
-        data[:,:,:,i] .= findmissing.(read(A["air"])[:,:,1:4:(365*4)]) # Discard Leap Years (:
+        data[:,:,:,i] .= mean_air_data(read(A["air"])) # Discard Leap Years (:
         close(A)
     end
     return data, lat, lon

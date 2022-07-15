@@ -61,7 +61,7 @@ end
 function mean_air_data(A)
     size_A = size(A)
     out = Array{Float32}(undef, size_A[1], size_A[2], 365)
-    @inbounds @fastmath (for i in 1:size_A[1]
+    @inbounds (for i in 1:size_A[1]
         for j in 1:size_A[2]
             for k in 1:365
                 out[i,j,k]  = mean(findmissing.(A[i,j,(4k-3):(4k)]))
@@ -92,7 +92,7 @@ function get_anomaly(data; years=1948:2021, radial_period=4, scale=true)
     size_A = size(data)
 
     out = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
-    for i in 1:length(years)
+    @inbounds (for i in 1:length(years)
         local_period = intersect(1:length(years), (i-radial_period):(i+radial_period))
         t = Array{Task}(undef,size_A[1])
         for j in 1:size_A[1]
@@ -103,7 +103,7 @@ function get_anomaly(data; years=1948:2021, radial_period=4, scale=true)
             end
         end
         wait.(t)
-    end
+    end)
     return out
 end
 
@@ -136,7 +136,7 @@ function c_i_j(data, is, js)
 
     t = Vector{Task}(undef, length(i_point_list))
 
-    for i in 1:length(i_point_list)
+    @inbounds (for i in 1:length(i_point_list)
         t[i] = Threads.@spawn for j in 1:length(e_point_list)
             x1 = i_point_list[i]
             x2 = e_point_list[j]
@@ -147,7 +147,7 @@ function c_i_j(data, is, js)
                 )
             end
         end
-    end
+    end)
     wait.(t)
     return C, i_point_list, e_point_list
 end

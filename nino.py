@@ -154,11 +154,11 @@ def separate_regions(T, lat, lon, x0, x1, y0, y1):
             x, y = lon[i,j], lat[i,j]
             if (j in lat_in and i in lon_in):
                 T_in[inrow,:-2] = T[:,j,i]
-                T_in[inrow,-2:] = [x,y]
+                T_in[inrow,-2:] = [i,j]
                 inrow += 1
             else:
                 T_out[outrow,:-2] = T[:,j,i]
-                T_out[outrow,-2:] = [x,y]
+                T_out[outrow,-2:] = [i,j]
                 outrow += 1
 
     return T_in, T_out
@@ -221,8 +221,14 @@ def comp_c(T_in, T_out, tau_max=200, gap=False):
         t_out = T_out[:,tau:days+tau]
         temp[:,:,tau] = pearson_coeffs(t_in, t_out)
     C = np.empty([n,m,4])
-    C[:,:,1] = np.argmax(temp, axis=2)
-    C[:,:,0] = np.max(temp, axis=2) * (C[:,:,1] < 151)
+    tempmax = np.empty([n,m,2])
+    C[:,:,1] = np.argmax(abs(temp), axis=2)
+    tempmax[:,:,0] = np.max(temp, axis=2) * (C[:,:,1] < 151)
+    tempmax[:,:,1] = np.max(-temp, axis=2) * (C[:,:,1] < 151)
+    C[:,:,0] = (
+        - tempmax[:,:,1] * (tempmax[:,:,1] > tempmax[:,:,0]) 
+        + tempmax[:,:,0] * (tempmax[:,:,1] < tempmax[:,:,0])
+    )
     C[:,:,2] = np.mean(temp, axis=2)
     C[:,:,3] = np.std(temp, axis=2)
     return C
@@ -238,14 +244,29 @@ def year_series(T, lat, lon, start_year, year):
     else:
         end_date = start_date + 566
     T_in, T_out = separate_regions(
-        T[start_date:end_date,:,:], lat, lon, 10, 60, -5, 5
+        T[start_date:end_date,:,:], lat, lon, 190, 240, -5, 5
     )
     C = comp_c(T_in, T_out, gap=(not year%4))
     return C, T_in, T_out
 
 
+# load data
 T, lat, lon = get_data(1970,1975)
 
+
+# do series for one year
 C, T_in, T_out = year_series(T, lat, lon, 1970, 1972)
-print(np.shape(C), np.shape(T_in), np.shape(T_out))
-print(np.max(C[:,:,0]),np.min(C[:,:,0]))
+
+
+# plotting
+lon, lat = np.meshgrid(lon, lat)
+C_plot = np.empty_like(lon)
+C_plot[T_out[:,-1].astype(int), T_out[:,-2].astype(int)] = np.sum(C[:,:,0], axis=0)
+fig = plt.figure()
+map = Basemap(projection='mill',lon_0=178.75)
+map.pcolormesh(lon, lat, C_plot[::-1,:], cmap="jet", latlon=True, vmin = -15, vmax = 15)
+map.drawcoastlines()
+map.drawparallels(np.arange(-90,90,30),labels=[1,0,0,0])
+map.drawmeridians(np.arange(0,360,60),labels=[0,0,0,1])
+cb = map.colorbar()
+plt.show()

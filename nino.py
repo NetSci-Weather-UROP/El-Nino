@@ -206,7 +206,7 @@ def pearson_coeffs(x, y):
     )
 
 
-def comp_c(T_in, T_out, tau_max=150, gap=False):
+def comp_c(T_in, T_out, tau_max=200, gap=False):
     """
     Compute the maximum of the correlations, the respective offset, mean and 
     standard deviation over all offsets.
@@ -217,12 +217,12 @@ def comp_c(T_in, T_out, tau_max=150, gap=False):
     t_in = T_in[:,:days]
     for tau in range(tau_max+1):
         if not tau % 25:
-            print("Tau: ", tau)
+            print("Tau:", tau)
         t_out = T_out[:,tau:days+tau]
         temp[:,:,tau] = pearson_coeffs(t_in, t_out)
     C = np.empty([n,m,4])
-    C[:,:,0] = np.max(temp, axis=2)
     C[:,:,1] = np.argmax(temp, axis=2)
+    C[:,:,0] = np.max(temp, axis=2) * (C[:,:,1] < 151)
     C[:,:,2] = np.mean(temp, axis=2)
     C[:,:,3] = np.std(temp, axis=2)
     return C

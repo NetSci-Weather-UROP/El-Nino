@@ -98,7 +98,7 @@ function get_anomaly(data; years=1948:2021, radial_period=4, scale=true)
         for j in 1:size_A[1]
             t[j] = Threads.@spawn for k in 1:size_A[2]
                 for l in 1:365
-                    out[j,k,l,i] = data[j,k,l,i] - mean(filter(x->x!=NaN32,data[j,k,l,local_period]))
+                    out[j,k,l,i] = data[j,k,l,i] - mean(filter(x->!isnan(x),data[j,k,l,local_period]))
                 end
             end
         end

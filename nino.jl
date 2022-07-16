@@ -139,7 +139,7 @@ function c_i_j(data, is, js)
             x1 = i_point_list[i]
             x2 = e_point_list[j]
             for d in (200:-1:50) .- 49
-                C[i,j, d] = cross_correlation(
+                C[i,j, d] = cor(
                     @view(data[200:(200+364), x1[1], x1[2]]),
                     @view(data[d:(d+364), x2[1], x2[2]])
                 )

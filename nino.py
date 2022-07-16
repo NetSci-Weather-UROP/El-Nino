@@ -61,7 +61,7 @@ def read_air_data(year, latlon=True):
     return T
 
 
-def season_indices(start_year, end_year):
+def season_indices(start_year, end_year, gap_years = False):
     """
     Give the indices corresponding to new seasons in a 4-year cycle.
 
@@ -76,33 +76,41 @@ def season_indices(start_year, end_year):
     gap = 4 - start_year % 4
     if not gap % 4:
         gap = 0
-    indices = [59]
+    indices = [59 + gap*gap_years]
     for i in range(end_year - start_year + 1):
         for d in [92, 92, 91, 90]:
             indices.append(indices[-1]+d)
     indices.pop()
     indices = np.array(indices)
-    for year in range(end_year - start_year + 1):
-        if not (year % 4 - gap):
-            k = year*4
-            if not k:
-                indices[:] += 1
-            else:
-                indices[k:] += 1
+    if gap_years:
+        for year in range(end_year - start_year + 1):
+            if not (year % 4 - gap):
+                k = year*4
+                if not k:
+                    indices[:] += 1
+                else:
+                    indices[k:] += 1
     indices = np.concatenate(([0], indices, [indices[-1]+31]))
     return indices
 
 
-def _avoid_seasonality(T, start_year, end_year):
+def _avoid_seasonality(T, start_year, end_year, yearly_seasonal=False):
     """
     Removes the effect of seasonality on the measurements.
     """
     seasons = season_indices(start_year, end_year)
-    for i in range(len(seasons)-1):
-        d1, d2 = seasons[i], seasons[i+1]
-        standev = np.std(T[d1:d2,:,:], axis=0)
-        smean = np.mean(T[d1:d2,:,:], axis=0)
-        T[d1:d2,:,:] = (T[d1:d2,:,:] - smean) / standev
+    if yearly_seasonal:
+        for i in range(len(seasons)-1):
+            d1, d2 = seasons[i], seasons[i+1]
+            standev = np.std(T[d1:d2,:,:], axis=0)
+            smean = np.mean(T[d1:d2,:,:], axis=0)
+            T[d1:d2,:,:] = (T[d1:d2,:,:] - smean) / standev
+    else:
+        for day in range(365):
+            dmean = np.mean(T[day::365,:,:], axis=0)
+            dstandev = np.std(T[day::365,:,:], axis=0)
+            T[day::365,:,:] = (T[day::365,:,:]-dmean) / dstandev
+
     return T
 
 
@@ -164,24 +172,35 @@ def separate_regions(T, lat, lon, x0, x1, y0, y1):
     return T_in, T_out
 
 
-def get_data(start_year, end_year):
+def get_data(start_year, end_year, gap_years=False):
     """
     Obtain all normalised measurements for a given period.
 
     Parameters:
     start_year - first year of data;
-    end_year - last year of data (included).
+    end_year - last year of data (included);
+    gap_years=False - include gap days.
 
     Returns:
     T - 3-D numpy array containing the measurements;
     lat - 1-D numpy array of lateral coordinates;
     lon - 1-D numpy array of longitudinal coordinates.
     """
-    T, lat, lon = read_air_data(start_year)
 
-    for year in range(start_year+1, end_year+1):
-        T = np.append(T, read_air_data(year, latlon=False), axis=0)
-    
+    if gap_years:
+        T, lat, lon = read_air_data(start_year)
+        for year in range(start_year+1, end_year+1):
+            T = np.append(T, read_air_data(year, latlon=False), axis=0)
+    else:
+        T, lat, lon = read_air_data(start_year)
+        if not start_year % 4:
+            T = T[:-1,:,:]
+        for year in range(start_year+1, end_year+1):
+            T = np.append(T, read_air_data(year, latlon=False), axis=0)
+            if not year % 4:
+                T = T[:-1,:,:]
+                    
+
     T = _avoid_seasonality(T, start_year, end_year)
 
     return T, lat, lon
@@ -234,7 +253,7 @@ def comp_c(T_in, T_out, tau_max=200, gap=False):
     return C
     
 
-def year_series(T, lat, lon, start_year, year):
+def year_series(T, lat, lon, year, start_year=1948):
     """
     Compute `crosscorr` for a specific year window in the time series.
     """
@@ -250,23 +269,46 @@ def year_series(T, lat, lon, start_year, year):
     return C, T_in, T_out
 
 
-# load data
-T, lat, lon = get_data(1970,1975)
+def plot_data(lon, lat, data, min=None, max=None):
+
+    lon, lat = np.meshgrid(lon, lat)
+    fig = plt.figure()
+    map = Basemap(projection='mill',lon_0=178.75)
+    map.pcolormesh(lon, lat, data, cmap="jet", latlon=True, vmin=min, vmax=max)
+    map.drawcoastlines()
+    map.drawparallels(np.arange(-90,90,30),labels=[1,0,0,0])
+    map.drawmeridians(np.arange(0,360,60),labels=[0,0,0,1])
+    cb = map.colorbar()
+    plt.show()
+
+    return
 
 
-# do series for one year
-C, T_in, T_out = year_series(T, lat, lon, 1970, 1972)
+def run(years):
+    for year in years:
+        print("Computing year", year,"...")
+        C, T_in, T_out = year_series(T, lat, lon, year)
+
+        in_degree = np.sum((C[:,:,1] < 151), axis=0)
 
 
-# plotting
-lon, lat = np.meshgrid(lon, lat)
-C_plot = np.empty_like(lon)
-C_plot[T_out[:,-1].astype(int), T_out[:,-2].astype(int)] = np.sum(C[:,:,0], axis=0)
-fig = plt.figure()
-map = Basemap(projection='mill',lon_0=178.75)
-map.pcolormesh(lon, lat, C_plot[::-1,:], cmap="jet", latlon=True, vmin = -15, vmax = 15)
-map.drawcoastlines()
-map.drawparallels(np.arange(-90,90,30),labels=[1,0,0,0])
-map.drawmeridians(np.arange(0,360,60),labels=[0,0,0,1])
-cb = map.colorbar()
-plt.show()
+        # plotting
+        C_plot = np.empty([71,144])
+        N_plot = np.empty([71,144])
+        W_plot = np.empty([71,144])
+        C_plot[T_out[:,-1].astype(int), T_out[:,-2].astype(int)] = np.sum(C[:,:,0], axis=0)
+        N_plot[T_out[:,-1].astype(int), T_out[:,-2].astype(int)] = in_degree
+        W_plot[T_out[:,-1].astype(int), T_out[:,-2].astype(int)] = np.sum(
+            (C[:,:,0]-C[:,:,2])/C[:,:,3], axis=0
+        )
+
+        plot_data(lon, lat, C_plot, min=-30, max=30)
+        plot_data(lon, lat, N_plot, min=0, max=57)
+        plot_data(lon, lat, W_plot, min=-130, max=130)
+    
+    return
+
+
+T, lat, lon = get_data(1948,2021)
+
+run([1959,1972])

@@ -109,8 +109,8 @@ end
 
 function get_period(data, y, d)
     size_A = size(data)
-    local_data = Array{Float32}(undef, size_A[1], size_A[2], 365 + 200) 
-    local_data[:, :, 1:length(d:365)] .= data[:,:,d:365,y]
+    local_data = Array{Float32}(undef, 365 + 200, size_A[1], size_A[2]) 
+    local_data[1:length(d:365), :, :] .= permutedims(data[:,:,d:365,y],(3,1,2))
     
     filled_count = length(d:365)
     while filled_count < 365 + 200
@@ -118,7 +118,7 @@ function get_period(data, y, d)
         next_index = 365 + 200 - filled_count
         next_index > 365 ? next_index = 365 : nothing
 
-        local_data[:, :, (filled_count+1):(filled_count+next_index)] .= data[:,:,1:next_index,y]
+        local_data[(filled_count+1):(filled_count+next_index), :, :] .= permutedims(data[:,:,1:next_index,y],(3,1,2))
         filled_count += next_index
     end
     return local_data
@@ -131,24 +131,21 @@ function c_i_j(data, is, js)
     C = Array{Float32}(undef, interior_points, exterior_points, length(200:-1:50))
 
     i_point_list = [(i,j) for i in is for j in js]
-    e_point_list = [(i,j) for i in 1:size_A[1] for j in 1:size_A[2]]
+    e_point_list = [(i,j) for i in 1:size_A[2] for j in 1:size_A[3]]
     e_point_list = setdiff(e_point_list, i_point_list)
 
-    t = Vector{Task}(undef, length(i_point_list))
-
-    @inbounds (for i in 1:length(i_point_list)
-        t[i] = Threads.@spawn for j in 1:length(e_point_list)
+    (for j in 1:length(e_point_list)
+        for i in 1:length(i_point_list)
             x1 = i_point_list[i]
             x2 = e_point_list[j]
             for d in (200:-1:50) .- 49
                 C[i,j, d] = cross_correlation(
-                    data[x1[1], x1[2], 200:(200+364)],
-                    data[x2[1], x2[2], d:(d+364)]
+                    @view(data[200:(200+364), x1[1], x1[2]]),
+                    @view(data[d:(d+364), x2[1], x2[2]])
                 )
             end
         end
     end)
-    wait.(t)
     return C, i_point_list, e_point_list
 end
 end

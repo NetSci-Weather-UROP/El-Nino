@@ -134,7 +134,7 @@ function c_i_j(data, is, js)
     e_point_list = [(i,j) for i in 1:size_A[2] for j in 1:size_A[3]]
     e_point_list = setdiff(e_point_list, i_point_list)
 
-    (for j in 1:length(e_point_list)
+    @inbounds (for j in 1:length(e_point_list)
         for i in 1:length(i_point_list)
             x1 = i_point_list[i]
             x2 = e_point_list[j]

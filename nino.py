@@ -112,14 +112,14 @@ def _find_inside_indices(lat, lon, x0, x1, y0, y1):
     """
 
     if x0 < x1:
-        lon_in = [i for i, coord in enumerate(lon) if x0 <= coord <= x1]
+        lon_in = [i for i, coord in enumerate(lon) if x0 < coord < x1]
     else:
         lon_in = [
             i for i, coord in enumerate(lon)
-            if (coord <= x1 or x0 <= coord)
+            if (coord < x1 or x0 < coord)
         ]
 
-    lat_in = [j for j, coord in enumerate(lat) if y0 <= coord <= y1]
+    lat_in = [j for j, coord in enumerate(lat) if y0 < coord < y1]
 
     return lat_in, lon_in
 
@@ -146,7 +146,7 @@ def separate_regions(T, lat, lon, x0, x1, y0, y1):
     lat_in, lon_in = _find_inside_indices(lat, lon, x0, x1, y0, y1)
     days = np.shape(T)[0]
     lat, lon = np.meshgrid(lat,lon)
-    T_in, T_out = np.empty([105, days+2]), np.empty([10119, days+2])
+    T_in, T_out = np.empty([57, days+2]), np.empty([10167, days+2])
 
     inrow, outrow = 0, 0
     for i in range(np.shape(lat)[0]):
@@ -187,27 +187,44 @@ def get_data(start_year, end_year):
     return T, lat, lon
 
 
-# This IS terrible, need something better
-def crosscorr(T_in, T_out, tau_max=150, gap=False):
+def pearson_coeffs(x, y):
+    """
+    Calculates pearson coefficients between two sets  of time series:
+    (mean(xy) - mean(x)mean(y)) / (std(x)std(y))
+    """
+    n, m = np.shape(x)[0], np.shape(y)[0]
+    k = np.shape(x)[1]
+    if not k == np.shape(y)[1]:
+        raise ValueError(
+            f"Both x and y must have the same number of observations, not {k} "
+            f"and {np.shape(y)[1]}."
+        )
+    return (
+        (1/k * x @ y.transpose() 
+        - x.mean(axis=1).reshape([n,1]) * y.mean(axis=1))
+        / (x.std(axis=1).reshape([n,1]) * y.std(axis=1))
+    )
+
+
+def comp_c(T_in, T_out, tau_max=150, gap=False):
     """
     Compute the maximum of the correlations, the respective offset, mean and 
     standard deviation over all offsets.
     """
     n, m = np.shape(T_in)[0], np.shape(T_out)[0]
     days = 365 + gap
-    C = np.zeros([n,m,4])
-    for j in range(m):
-        if not j % 3:
-            print("Column ",j)
-        for i in range(n):
-            temp = np.empty(tau_max+1)
-            for tau in range(tau_max+1):
-                t_in, t_out = T_in[i,-days:-2], T_out[j,198-tau:days+198-tau]
-                temp[tau] = np.corrcoef(t_in[i], t_out[j])[0,1]
-            C[i,j,0] = np.max(temp)
-            C[i,j,1] = np.argmax(temp)
-            C[i,j,2] = np.mean(temp)
-            C[i,j,3] = np.std(temp)
+    temp = np.empty([n,m,tau_max+1])
+    t_in = T_in[:,:days]
+    for tau in range(tau_max+1):
+        if not tau % 25:
+            print("Tau: ", tau)
+        t_out = T_out[:,tau:days+tau]
+        temp[:,:,tau] = pearson_coeffs(t_in, t_out)
+    C = np.empty([n,m,4])
+    C[:,:,0] = np.max(temp, axis=2)
+    C[:,:,1] = np.argmax(temp, axis=2)
+    C[:,:,2] = np.mean(temp, axis=2)
+    C[:,:,3] = np.std(temp, axis=2)
     return C
     
 
@@ -215,7 +232,7 @@ def year_series(T, lat, lon, start_year, year):
     """
     Compute `crosscorr` for a specific year window in the time series.
     """
-    start_date = season_indices(start_year, year)[-4]-169
+    start_date = season_indices(start_year, year)[-4]+31
     if (year % 4):
         end_date = start_date + 565
     else:
@@ -223,12 +240,12 @@ def year_series(T, lat, lon, start_year, year):
     T_in, T_out = separate_regions(
         T[start_date:end_date,:,:], lat, lon, 10, 60, -5, 5
     )
-    C = crosscorr(T_in, T_out, gap=True)
+    C = comp_c(T_in, T_out, gap=(not year%4))
     return C, T_in, T_out
 
 
 T, lat, lon = get_data(1970,1975)
 
-# THIS IS EXTREMELY SLOW
-# C, T_in, T_out = year_series(T, lat, lon, 1970, 1972)
-# print(np.shape(C), np.shape(T_in), np.shape(T_out))
+C, T_in, T_out = year_series(T, lat, lon, 1970, 1972)
+print(np.shape(C), np.shape(T_in), np.shape(T_out))
+print(np.max(C[:,:,0]),np.min(C[:,:,0]))

@@ -9,7 +9,7 @@ pipeline {
 		}
 		stage('Run Python') {
 			steps {
-				sh 'python3 ./nino.jl'
+				sh 'python3 ./nino.py'
 			}
 		}
         stage('Run Julia') {

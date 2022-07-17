@@ -7,7 +7,7 @@ include("./nino.jl")
 using .OurNino
 
 function main()
-    years=1972:1992
+    years=1977:1987
     data, lat, lon = get_data(; years=years)
     anomaly_data = get_anomaly(data; years=years)
 	display(anomaly_data[1:100])
@@ -17,7 +17,7 @@ function main()
     println(enb_is)
     println(enb_js)
 
-    window = get_period(data, 11, 1) 
+    window = get_period(data, 6, 1) 
     C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)
 	println(C[1:100])
 	

@@ -7,7 +7,12 @@ pipeline {
 				sh '[ -e air.sig995 ] || ln -s ~/air.sig995 .'
 			}
 		}
-        stage('Run') {
+		stage('Run Python') {
+			steps {
+				sh 'python3 ./nino.jl'
+			}
+		}
+        stage('Run Julia') {
             steps {
                 sh 'julia -t 1 -O 3 -C native ./main.jl'
             }

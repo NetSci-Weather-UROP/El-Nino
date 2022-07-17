@@ -1,5 +1,5 @@
 """
-Not sure what to write here yet...
+Python implementation of reproducing the paper results.
 """
 import netCDF4 as nc
 import numpy as np
@@ -253,19 +253,16 @@ def comp_c(T_in, T_out, tau_max=200, gap=False):
     return C
     
 
-def year_series(T, lat, lon, year, start_year=1948):
+def year_series(T, lat, lon, year, start_year=1948, gap_years=False):
     """
     Compute `crosscorr` for a specific year window in the time series.
     """
     start_date = season_indices(start_year, year)[-4]+31
-    if (year % 4):
-        end_date = start_date + 565
-    else:
-        end_date = start_date + 566
+    end_date = start_date + 565 + (not (year % 4))*gap_years
     T_in, T_out = separate_regions(
         T[start_date:end_date,:,:], lat, lon, 190, 240, -5, 5
     )
-    C = comp_c(T_in, T_out, gap=(not year%4))
+    C = comp_c(T_in, T_out, gap=((not year%4)*gap_years))
     return C, T_in, T_out
 
 
@@ -302,13 +299,29 @@ def run(years):
             (C[:,:,0]-C[:,:,2])/C[:,:,3], axis=0
         )
 
-        plot_data(lon, lat, C_plot, min=-30, max=30)
-        plot_data(lon, lat, N_plot, min=0, max=57)
-        plot_data(lon, lat, W_plot, min=-130, max=130)
+        # plot_data(lon, lat, C_plot, min=-30, max=30)
+        # plot_data(lon, lat, N_plot, min=0, max=57)
+        # plot_data(lon, lat, W_plot, min=-150, max=150)
     
     return
 
 
-T, lat, lon = get_data(1948,2021)
+# T, lat, lon = get_data(1948,2021)
 
-run([1959,1972])
+### UNCOMMENT FOR FASTER RERUNS ON FIRST LOCAL RUN
+### note that this creates a file approx 1 GB
+
+# with open('temp_data_1948_2021.npy', 'wb') as f:
+#     np.save(f, T)
+#     np.save(f, lat)
+#     np.save(f, lon)
+
+with open('temp_data_1948_2021.npy', 'rb') as f:
+    T = np.load(f)
+    lat = np.load(f)
+    lon = np.load(f)
+
+run([1959, 1972])
+
+### total runtime: ~16s 
+### (~0.5s for loading and ~15.5s for running over one period window)

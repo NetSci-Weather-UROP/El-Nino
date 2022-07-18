@@ -40,7 +40,7 @@ function main()
 
             H(θ[j,i])
             in_C[e_point[1], e_point[2]] += (
-                C[j,i,θ[j,i]]*H(lags[θ[j,i]]) 
+                C[j,i,θ[j,i]]*H(lags[θ[j,i]])*(1-(i==j))
             )
         end
     end

@@ -29,6 +29,8 @@ function main()
 
 	years = Array(years)
 
+    in_C = in_weights(C, i_point_list, e_point_list, length(lon), length(lat))
+
     OurNino.HDF5.h5open("generated_data.h5", "w") do file
         OurNino.HDF5.@write file C
 		OurNino.HDF5.@write file i_point_list
@@ -39,6 +41,7 @@ function main()
         OurNino.HDF5.@write file lat
         OurNino.HDF5.@write file lon
 		OurNino.HDF5.@write file years
+        OurNino.HDF5.@write file in_C
     end
 
     return 0

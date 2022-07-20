@@ -2,7 +2,7 @@
 
 module OurNino
 
-export get_data, get_anomaly, find_inside_indeces, get_period, c_i_j
+export get_data, get_anomaly, find_inside_indeces, get_period, c_i_j, in_weights
 
 using HDF5, Dates, StatsBase, LoopVectorization
 
@@ -151,5 +151,39 @@ function c_i_j(data, is, js; lags=50:350)
     end)
     wait.(t)
     return C, i_point_list, e_point_list
+end
+
+function H(x)
+    if x >= 0
+        return typeof(x)(1)
+    else
+        return typeof(x)(0)
+    end
+end
+
+function in_weights(C, i_point_list, e_point_list, l_lon, l_lat; lags=50:350)
+    lags=200 .- lags
+    size_C = size(C)
+    θ = Array{Int64}(undef, size_C[1], size_C[2])
+    for i in 1:size_C[1]
+        for j in 1:size_C[2]
+            θ[i,j] = findmax(abs,C[i,j,:])[2]
+        end
+    end
+    
+    in_C = zeros(Float32, l_lon, l_lat)
+
+    for i in 1:size(e_point_list)[1]
+        for j in 1:size(i_point_list)[1]
+            
+            e_point = e_point_list[i,:]
+
+            in_C[e_point[1], e_point[2]] += (
+                C[j,i,θ[j,i]]*H(lags[θ[j,i]])*(1-(i==j))
+            )
+        end
+    end
+
+    return in_C
 end
 end

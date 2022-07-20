@@ -266,16 +266,18 @@ def year_series(T, lat, lon, year, start_year=1948, gap_years=False):
     return C, T_in, T_out
 
 
-def plot_data(lon, lat, data, min=None, max=None):
+def plot_data(lon, lat, data, min=None, max=None, name="plot"):
 
     lon, lat = np.meshgrid(lon, lat)
     fig = plt.figure()
+    plt.title(f"{name}")
     map = Basemap(projection='mill',lon_0=178.75)
     map.pcolormesh(lon, lat, data, cmap="jet", latlon=True, vmin=min, vmax=max)
     map.drawcoastlines()
     map.drawparallels(np.arange(-90,90,30),labels=[1,0,0,0])
     map.drawmeridians(np.arange(0,360,60),labels=[0,0,0,1])
     cb = map.colorbar()
+    plt.savefig(f"./CNW-plots/{name}.png")
     plt.show()
 
     return
@@ -299,9 +301,9 @@ def run(years):
             (C[:,:,0]-C[:,:,2])/C[:,:,3], axis=0
         )
 
-        # plot_data(lon, lat, C_plot, min=-30, max=30)
-        # plot_data(lon, lat, N_plot, min=0, max=57)
-        # plot_data(lon, lat, W_plot, min=-150, max=150)
+        plot_data(lon, lat, C_plot, min=-30, max=30, name=f"{year} in C")
+        plot_data(lon, lat, N_plot, min=0, max=57, name=f"{year} in N")
+        plot_data(lon, lat, W_plot, min=-170, max=170, name=f"{year} in W")
     
     return
 

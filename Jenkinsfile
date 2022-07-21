@@ -1,10 +1,17 @@
 pipeline {
     agent any
+
+	environment {
+		WAYLAND_DISPLAY = 'wayland-0'
+		DISPLAY = ':0'
+	}
+
     stages {
 		stage('Setup') {
 			steps {
 				step([$class: 'GitHubSetCommitStatusBuilder'])
 				sh '[ -e air.sig995 ] || ln -s ~/air.sig995 .'
+				sh '[ -e temp_data_1948_2021.npy ] || ln -s ~/temp_data_1948_2021.npy .'
 			}
 		}
 		stage('Run Python') {

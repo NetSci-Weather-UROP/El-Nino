@@ -32,7 +32,7 @@ def read_air_data(year, latlon=True):
 
 def _avoid_seasonality(T, start_year, end_year, yearly_seasonal=False):
     """
-    Removes the effect of seasonality on the measurements.
+    Remove the effect of seasonality on the measurements.
     """
 
     # for every day
@@ -90,15 +90,26 @@ def separate_regions(T, lat, lon, x0, x1, y0, y1):
     as longitudinal and lateral coordinates.
     """
 
+    # find regional indices
     lat_in, lon_in = _find_inside_indices(lat, lon, x0, x1, y0, y1)
-    days = np.shape(T)[0]
-    lat, lon = np.meshgrid(lat,lon)
-    T_in, T_out = np.empty([57, days+2]), np.empty([10167, days+2])
+    
+    # compute total number of nodes and number of inside nodes
+    nodecount = np.size(lat) * np.size(lon)
+    in_nodecount = np.size(lat_in) * np.size(lon_in)
 
+    # total number of days to be examined (usually 365)
+    days = np.shape(T)[0]
+
+    lat, lon = np.meshgrid(lat,lon)
+
+    # initalise gridpoint time series sets
+    T_in = np.empty([in_nodecount, days+2])
+    T_out = np.empty([nodecount-in_nodecount, days+2])
+
+    # add time series to correct set
     inrow, outrow = 0, 0
     for i in range(np.shape(lat)[0]):
         for j in range(np.shape(lat)[1]):
-            x, y = lon[i,j], lat[i,j]
             if (j in lat_in and i in lon_in):
                 T_in[inrow,:-2] = T[:,j,i]
                 T_in[inrow,-2:] = [i,j]
@@ -111,14 +122,13 @@ def separate_regions(T, lat, lon, x0, x1, y0, y1):
     return T_in, T_out
 
 
-def get_data(start_year, end_year, gap_years=False):
+def get_data(start_year, end_year):
     """
     Obtain all normalised measurements for a given period.
 
     Parameters:
     start_year - first year of data;
-    end_year - last year of data (included);
-    gap_years=False - include gap days.
+    end_year - last year of data (included).
 
     Returns:
     T - 3-D numpy array containing the measurements;
@@ -126,20 +136,25 @@ def get_data(start_year, end_year, gap_years=False):
     lon - 1-D numpy array of longitudinal coordinates.
     """
 
-    if gap_years:
-        T, lat, lon = read_air_data(start_year)
-        for year in range(start_year+1, end_year+1):
-            T = np.append(T, read_air_data(year, latlon=False), axis=0)
-    else:
-        T, lat, lon = read_air_data(start_year)
-        if not start_year % 4:
+    # compute T and lat, lon first (so lat and lon don't have to be loaded
+    # for every year)
+    T, lat, lon = read_air_data(start_year)
+
+    # remove possible gap day
+    if not start_year % 4:
+        T = T[:-1,:,:]
+
+    # iterate through years, end_year inclusive
+    for year in range(start_year+1, end_year+1):
+
+        # append yearly data
+        T = np.append(T, read_air_data(year, latlon=False), axis=0)
+
+        # remove possible gap days
+        if not year % 4:
             T = T[:-1,:,:]
-        for year in range(start_year+1, end_year+1):
-            T = np.append(T, read_air_data(year, latlon=False), axis=0)
-            if not year % 4:
-                T = T[:-1,:,:]
 
-
+    # standardise data
     T = _avoid_seasonality(T, start_year, end_year)
 
     return T, lat, lon
@@ -150,27 +165,46 @@ def pearson_coeffs(x, y):
     Calculates pearson coefficients between two sets  of time series:
     (mean(xy) - mean(x)mean(y)) / (std(x)std(y))
     """
+
+    # number of rows and columns
     n, m = np.shape(x)[0], np.shape(y)[0]
+
+    # number of observations
     k = np.shape(x)[1]
+
+    # check matching shapes
     if not k == np.shape(y)[1]:
         raise ValueError(
             f"Both x and y must have the same number of observations, not {k} "
             f"and {np.shape(y)[1]}."
         )
+
     return (
         (1/k * x @ y.transpose()
         - x.mean(axis=1).reshape([n,1]) * y.mean(axis=1))
         / (x.std(axis=1).reshape([n,1]) * y.std(axis=1))
     )
 
+def maximod(x, axis=None):
+    """
+    Find the maximal modulus inside an array.
+    """
+    pos = np.max(x, axis=axis)
+    neg = np.min(x, axis=axis)
 
-def comp_c(T_in, T_out, tau_max=200, gap=False):
+    return pos * (pos > -neg) + neg * (pos < -neg)
+
+def comp_c(T_in, T_out, tau_max=200):
     """
     Compute the maximum of the correlations, the respective offset, mean and
     standard deviation over all offsets.
     """
+    # rows and columns
     n, m = np.shape(T_in)[0], np.shape(T_out)[0]
-    days = 365 + gap
+
+    days = 365
+
+    # temporary array holding corrcoefs for all offsets
     temp = np.empty([n,m,tau_max+1])
     t_in = T_in[:,:days]
     for tau in range(tau_max+1):

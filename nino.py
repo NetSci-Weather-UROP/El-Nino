@@ -6,7 +6,7 @@ import numpy as np
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from .utils import *
+from utils import *
 
 def anim(T, lat, lon):
     frames = [] # for storing the generated images

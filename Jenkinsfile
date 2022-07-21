@@ -15,16 +15,20 @@ pipeline {
 				sh 'sed -i "s/plt.show()//g" nino.py'
 			}
 		}
-		stage('Run Python') {
-			steps {
-				sh 'python3 ./nino.py'
+		stage('Run') {
+			parallel {
+				stage('Run Python') {
+					steps {
+						sh 'python3 ./nino.py'
+					}
+				}
+				stage('Run Julia') {
+					steps {
+						sh 'julia -t 1 -O 3 -C native ./main.jl'
+					}
+				}
 			}
 		}
-        stage('Run Julia') {
-            steps {
-                sh 'julia -t 1 -O 3 -C native ./main.jl'
-            }
-        }
     }
 	post {
 		 always {

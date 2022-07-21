@@ -13,6 +13,7 @@ pipeline {
 				sh '[ -e air.sig995 ] || ln -s ~/air.sig995 .'
 				sh '[ -e temp_data_1948_2021.npy ] || ln -s ~/temp_data_1948_2021.npy .'
 				sh 'sed -i "s/plt.show()//g" nino.py'
+				sh 'rm CNW-plots/*'
 			}
 		}
 		stage('Run') {
@@ -20,6 +21,7 @@ pipeline {
 				stage('Run Python') {
 					steps {
 						sh 'python3 ./nino.py'
+						archiveArtifacts artifacts: 'CNW-plots/*'
 					}
 				}
 				stage('Run Julia') {

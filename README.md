@@ -29,7 +29,7 @@ Reproduction of Results of https://www.pnas.org/doi/full/10.1073/pnas.1701214114
 
 ![1972 in W](CNW-plots/1972%20in%20W.png)
 
-# Plots Generated from Latest Git:
+# Plots Generated from Succesful Build:
 
 1959 In(C)
 

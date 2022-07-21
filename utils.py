@@ -191,7 +191,6 @@ def maximod(x, axis=None):
     """
     pos = np.max(x, axis=axis)
     neg = np.min(x, axis=axis)
-
     return pos * (pos > -neg) + neg * (pos < -neg)
 
 def comp_c(T_in, T_out, tau_max=200):
@@ -207,22 +206,28 @@ def comp_c(T_in, T_out, tau_max=200):
     # temporary array holding corrcoefs for all offsets
     temp = np.empty([n,m,tau_max+1])
     t_in = T_in[:,:days]
+
+    # iterate through all offsets
     for tau in range(tau_max+1):
-        if not tau % 25:
+        if not tau % 50:
             print("Tau:", tau)
+        # set offset window for outside nodes
         t_out = T_out[:,tau:days+tau]
+
+        # append corrcoefs for specific offset
         temp[:,:,tau] = pearson_coeffs(t_in, t_out)
+
     C = np.empty([n,m,4])
-    tempmax = np.empty([n,m,2])
-    C[:,:,1] = np.argmax(abs(temp), axis=2)
-    tempmax[:,:,0] = np.max(temp, axis=2) * (C[:,:,1] < 151)
-    tempmax[:,:,1] = np.max(-temp, axis=2) * (C[:,:,1] < 151)
-    C[:,:,0] = (
-        - tempmax[:,:,1] * (tempmax[:,:,1] > tempmax[:,:,0])
-        + tempmax[:,:,0] * (tempmax[:,:,1] < tempmax[:,:,0])
-    )
+
+    # theta_i,j
+    C[:,:,1] = np.argmax(np.abs(temp), axis=2)
+    # C(theta_i,j)
+    C[:,:,0] = maximod(temp, axis=2) * (C[:,:,1] < 151)
+    # mean over all theta
     C[:,:,2] = np.mean(temp, axis=2)
+    # standard deviation over  all theta
     C[:,:,3] = np.std(temp, axis=2)
+
     return C
 
 

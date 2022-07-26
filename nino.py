@@ -44,7 +44,7 @@ def plot_data(lon, lat, data, min=None, max=None, name="plot", showplots=False):
     lon, lat = np.meshgrid(lon, lat)
     fig = plt.figure()
     plt.title(f"{name}")
-    map = Basemap(projection='mill',lon_0=178.75)
+    map = Basemap(projection='robin',lon_0=-178.75)
     map.pcolormesh(lon, lat, data, cmap="jet", latlon=True, vmin=min, vmax=max)
     map.drawcoastlines()
     map.drawparallels(np.arange(-90,90,30),labels=[1,0,0,0])
@@ -63,7 +63,7 @@ def run(years, showplots=False):
         print("Computing year", year,"...")
         C, T_in, T_out = year_series(T, lat, lon, year)
 
-        in_degree = np.sum((C[:,:,1] < 151), axis=0)
+        in_degree = np.sum((0<=C[:,:,1])*(C[:,:,1] < 151), axis=0)
 
 
         # plotting
@@ -76,9 +76,9 @@ def run(years, showplots=False):
             (C[:,:,0]-C[:,:,2])/C[:,:,3], axis=0
         )
 
-        plot_data(lon, lat, C_plot, min=-30, max=30, name=f"{year} in C", showplots=showplots)
+        plot_data(lon, lat, C_plot, min=-15, max=15, name=f"{year} in C", showplots=showplots)
         plot_data(lon, lat, N_plot, min=0, max=57, name=f"{year} in N", showplots=showplots)
-        plot_data(lon, lat, W_plot, min=-170, max=170, name=f"{year} in W", showplots=showplots)
+        plot_data(lon, lat, W_plot, min=-100, max=100, name=f"{year} in W", showplots=showplots)
     
     return
 
@@ -98,7 +98,7 @@ with open('temp_data_1948_2021.npy', 'rb') as f:
     lat = np.load(f)
     lon = np.load(f)
 
-run([1959, 1972])
+run([1959, 1972], showplots=True)
 
 ### total runtime: ~16s 
 ### (~0.5s for loading and ~15.5s for running over one period window)

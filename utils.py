@@ -30,7 +30,7 @@ def read_air_data(year, latlon=True):
     return T
 
 
-def _avoid_seasonality(T, start_year, end_year, yearly_seasonal=False):
+def avoid_seasonality(T):
     """
     Remove the effect of seasonality on the measurements.
     """
@@ -50,7 +50,17 @@ def _avoid_seasonality(T, start_year, end_year, yearly_seasonal=False):
     return T
 
 
-def _find_inside_indices(lat, lon, x0, x1, y0, y1):
+def find_start_date(day, month):
+    """
+    Return the ordinal number of a date in a year.
+    """
+    days = np.array([0,31,28,31,30,31,30,31,31,30,31,30])
+    startdate = np.sum(days[:month]) + day
+
+    return startdate
+
+
+def find_inside_indices(lat, lon, x0, x1, y0, y1):
     """
     Find indices for points inside a "rectangular" region on the globe.
     """
@@ -91,7 +101,7 @@ def separate_regions(T, lat, lon, x0, x1, y0, y1):
     """
 
     # find regional indices
-    lat_in, lon_in = _find_inside_indices(lat, lon, x0, x1, y0, y1)
+    lat_in, lon_in = find_inside_indices(lat, lon, x0, x1, y0, y1)
     
     # compute total number of nodes and number of inside nodes
     nodecount = np.size(lat) * np.size(lon)
@@ -155,7 +165,7 @@ def get_data(start_year, end_year):
             T = T[:-1,:,:]
 
     # standardise data
-    T = _avoid_seasonality(T, start_year, end_year)
+    T = avoid_seasonality(T)
 
     return T, lat, lon
 
@@ -185,6 +195,7 @@ def pearson_coeffs(x, y):
         / (x.std(axis=1).reshape([n,1]) * y.std(axis=1))
     )
 
+
 def maximod(x, axis=None):
     """
     Find the maximal modulus inside an array.
@@ -192,6 +203,7 @@ def maximod(x, axis=None):
     pos = np.max(x, axis=axis)
     neg = np.min(x, axis=axis)
     return pos * (pos > -neg) + neg * (pos < -neg)
+
 
 def comp_c(T_in, T_out, tau_max=200):
     """
@@ -204,25 +216,25 @@ def comp_c(T_in, T_out, tau_max=200):
     days = 365
 
     # temporary array holding corrcoefs for all offsets
-    temp = np.empty([n,m,tau_max+1])
-    t_in = T_in[:,:days]
+    temp = np.empty([n,m,2*tau_max+1])
+    t_in = T_in[:,tau_max:tau_max+days]
 
     # iterate through all offsets
-    for tau in range(tau_max+1):
+    for tau in range(-tau_max, tau_max+1):
         if not tau % 50:
             print("Tau:", tau)
         # set offset window for outside nodes
-        t_out = T_out[:,tau:days+tau]
+        t_out = T_out[:,tau_max+tau:tau_max+days+tau]
 
         # append corrcoefs for specific offset
-        temp[:,:,tau] = pearson_coeffs(t_in, t_out)
+        temp[:,:,tau_max+tau] = pearson_coeffs(t_in, t_out)
 
     C = np.empty([n,m,4])
 
     # theta_i,j
-    C[:,:,1] = np.argmax(np.abs(temp), axis=2)
+    C[:,:,1] = np.argmax(np.abs(temp), axis=2) - tau_max
     # C(theta_i,j)
-    C[:,:,0] = maximod(temp, axis=2) * (C[:,:,1] < 151)
+    C[:,:,0] = maximod(temp, axis=2) * (C[:,:,1] < 151) * (0 <= C[:,:,1])
     # mean over all theta
     C[:,:,2] = np.mean(temp, axis=2)
     # standard deviation over  all theta
@@ -231,20 +243,24 @@ def comp_c(T_in, T_out, tau_max=200):
     return C
 
 
-def year_series(T, lat, lon, year, start_year=1948):
+def year_series(
+        T, lat, lon, year, start_year=1948, window_day=1, window_month=7
+    ):
     """
     Compute `crosscorr` for a specific year window in the time series.
     """
 
-    # compute start date (1 July) index
-    start_date = (year-start_year) * 365 + 182
+    # compute start date (1 July by default) index
+    start_date = (
+        (year-start_year) * 365 + find_start_date(window_day, window_month)
+    )
 
     # compute end date index
     end_date = start_date + 565
 
     # split regions for this period
     T_in, T_out = separate_regions(
-        T[start_date:end_date,:,:], lat, lon, 190, 240, -5, 5
+        T[start_date-200:end_date,:,:], lat, lon, 190, 240, -5, 5
     )
 
     # compute various parameters

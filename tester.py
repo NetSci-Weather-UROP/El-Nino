@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from utils import *
 
-start_year = 1968
-end_year = 1978
+start_year = 1958
+end_year = 1968
 
 T, lat, lon = read_air_data(start_year)
 
@@ -25,7 +25,7 @@ T0 = np.copy(T) # actual temperature measurements
 T1 = avoid_seasonality(T) # seasonality removed measurements
 
 tau_max=200
-year = 1972
+year = 1963
 start_date = find_start_date(1, 7) + (year-start_year)*365
 end_date = start_date + 565
 
@@ -61,3 +61,17 @@ C[:,:,0] = maximod(temp, axis=2) * (C[:,:,1] < 151) * (0 <= C[:,:,1])
 C[:,:,2] = np.mean(temp, axis=2)
 # standard deviation over  all theta
 C[:,:,3] = np.std(temp, axis=2)
+
+outx, outy, inx, iny = 59, 14, 89, 35
+
+fig = plt.figure()
+plt.plot(T[start_date+31:start_date+31+365,iny,inx])
+plt.plot(T[start_date+31:start_date+31+365,outy,outx])
+plt.show()
+
+outind = 4203
+
+fig = plt.figure()
+for i in range(57):
+    plt.plot(temp[i,outind,:])
+plt.show()

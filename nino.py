@@ -63,7 +63,7 @@ def run(years, showplots=False):
         print("Computing year", year,"...")
         C, T_in, T_out = year_series(T, lat, lon, year)
 
-        in_degree = np.sum((0<=C[:,:,1])*(C[:,:,1] < 151), axis=0)
+        in_degree = np.sum((0 <=C[:,:,1])*(C[:,:,1] < 151), axis=0)
 
 
         # plotting

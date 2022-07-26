@@ -55,7 +55,7 @@ def find_start_date(day, month):
     Return the ordinal number of a date in a year.
     """
     days = np.array([0,31,28,31,30,31,30,31,31,30,31,30])
-    startdate = np.sum(days[:month]) + day
+    startdate = np.sum(days[:month]) + day - 1
 
     return startdate
 
@@ -236,9 +236,9 @@ def comp_c(T_in, T_out, tau_max=200):
     # C(theta_i,j)
     C[:,:,0] = maximod(temp, axis=2) * (C[:,:,1] < 151) * (0 <= C[:,:,1])
     # mean over all theta
-    C[:,:,2] = np.mean(temp, axis=2)
+    C[:,:,2] = np.mean(temp[:,:,tau_max:tau_max+150], axis=2)
     # standard deviation over  all theta
-    C[:,:,3] = np.std(temp, axis=2)
+    C[:,:,3] = np.std(temp[:,:,tau_max:tau_max+150], axis=2)
 
     return C
 

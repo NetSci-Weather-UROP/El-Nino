@@ -87,6 +87,9 @@ function get_data(;years=1948:2021)
     return data, lat, lon
 end
 
+"""
+Use adjacent `radial_period` years for anomaly
+"""
 function get_anomaly(data; years=1948:2021, radial_period=4, scale=true)
     # This is a bit silly again. We can do this on a GPU for a speedup though.
     size_A = size(data)
@@ -108,6 +111,19 @@ function get_anomaly(data; years=1948:2021, radial_period=4, scale=true)
     return out
 end
 
+"""
+Use all years for anomaly as in python
+"""
+function get_anomaly2(data; years=1948:2021, radial_period=4, scale=true)
+    size_A = size(data)
+
+    out = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
+    for day in 1:365
+        out[:,:,day,:] .= (data[:,:,day,:] .- mean(data[:,:,day,:];dims=3))./std(data[:,:,day,:];dims=3,corrected=false)
+    end
+    return out
+end
+
 function get_period(data, y, d; days=715) #715 = 150+200+365
     size_A = size(data)
     local_data = Array{Float32}(undef, days, size_A[1], size_A[2]) 
@@ -125,6 +141,9 @@ function get_period(data, y, d; days=715) #715 = 150+200+365
     return local_data
 end
 
+"""
+tau ranges between -150 and 150 here
+"""
 function c_i_j(data, is, js; lags=50:350)
     size_A = size(data)
     interior_points = length(is)*length(js)
@@ -148,6 +167,78 @@ function c_i_j(data, is, js; lags=50:350)
                     @view(data[lags[d]:(lags[d]+364), x2[1], x2[2]])
                 )
             end
+        end
+    end)
+    wait.(t)
+    return C, i_point_list, e_point_list
+end
+
+"""
+tau ranges from 0 to 150; negative taus are interpreted to correspond to c_j_i
+"""
+function c_i_j2(data, is, js; lags=150)
+    size_A = size(data)
+    interior_points = length(is)*length(js)
+    exterior_points = size_A[2] * size_A[3] - interior_points
+    C = Array{Float32}(undef, interior_points, exterior_points, lags*2+1)
+
+    i_point_list = [(i,j) for i in is for j in js]
+    e_point_list = [(i,j) for i in 1:size_A[2] for j in 1:size_A[3]]
+    e_point_list = setdiff(e_point_list, i_point_list)
+
+    t = Array{Task}(undef,interior_points*exterior_points*2)
+    c=0
+    @inbounds (for j in 1:length(e_point_list)
+        for i in 1:length(i_point_list)
+            c+=1
+            x1 = i_point_list[i]
+            x2 = e_point_list[j]
+            t[c] = Threads.@spawn for d in 0:lags
+                    C[i,j, 1+lags+d] = cor(
+                        @view(data[200:(200+364), x1[1], x1[2]]),
+                        @view(data[(200+d):(200+d+364), x2[1], x2[2]])
+                    )
+                end
+            c+=1
+            t[c] = Threads.@spawn for d in 1:lags
+                    C[i,j, 1+lags-d] = cor(
+                        @view(data[200:(200+364), x2[1], x2[2]]),
+                        @view(data[(200+d):(200+d+364), x1[1], x1[2]])
+                    )
+            end
+        end
+    end)
+    wait.(t)
+    return C, i_point_list, e_point_list
+end
+
+"""
+Use StatsBase' crosscor rather than implementing our own
+"""
+function c_i_j3(data, is, js; lags=50:350)
+    size_A = size(data)
+    interior_points = length(is)*length(js)
+    exterior_points = size_A[2] * size_A[3] - interior_points
+    C = Array{Float32}(undef, interior_points, exterior_points, length(lags))
+
+    i_point_list = [(i,j) for i in is for j in js]
+    e_point_list = [(i,j) for i in 1:size_A[2] for j in 1:size_A[3]]
+    e_point_list = setdiff(e_point_list, i_point_list)
+
+    t = Array{Task}(undef,interior_points*exterior_points)
+    c=0
+    @inbounds (for j in 1:length(e_point_list)
+        for i in 1:length(i_point_list)
+            c+=1
+            x1 = i_point_list[i]
+            x2 = e_point_list[j]
+            t[c] = Threads.@spawn( 
+                C[i,j, :] .= crosscor(
+                    @view(data[:, x1[1], x1[2]]),
+                    @view(data[:, x2[1], x2[2]]),
+                    lags.-200;
+                )
+            )
         end
     end)
     wait.(t)

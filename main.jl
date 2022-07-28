@@ -13,9 +13,9 @@ else
 end
 
 if haskey(ENV, "C_IMPL")
-	const anom_impl = ENV["C_IMPL"]
+	const c_impl = ENV["C_IMPL"]
 else
-	const anom_impl = "1"
+	const c_impl = "1"
 end
 
 function main()
@@ -37,11 +37,11 @@ function main()
 
     window = get_period(anomaly_data, 6, 1) 
 
-	if anom_impl == "1"
+	if c_impl == "1"
     	C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)
-	elseif anom_impl == "2"
+	elseif c_impl == "2"
     	C, i_point_list, e_point_list = c_i_j2(window, enb_is, enb_js)
-	elseif anom_impl == "3"
+	elseif c_impl == "3"
     	C, i_point_list, e_point_list = c_i_j3(window, enb_is, enb_js)
 	end
 

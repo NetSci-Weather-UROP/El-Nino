@@ -1,2 +1,9 @@
 air.sig995
 air.sig995.tar.gz
+__pycache__/nino.cpython-310.pyc
+__pycache__/tester.cpython-310.pyc
+__pycache__/utils.cpython-310.pyc
+__pycache__/utils.cpython-39.pyc
+practice.jl
+temp_data_1948_2021.npy
+cross_correlation_standard_temps.mkv

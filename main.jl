@@ -17,7 +17,7 @@ function main()
     println(enb_is)
     println(enb_js)
 
-    window = get_period(data, 6, 1) 
+    window = get_period(anomaly_data, 6, 1) 
     C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)
 	println(C[1:100])
 	

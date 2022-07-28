@@ -2,27 +2,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 from utils import *
 
-start_year = 1958
-end_year = 1968
+start_year = 1948
+end_year = 2021
 
-T, lat, lon = read_air_data(start_year)
+# T, lat, lon = read_air_data(start_year)
 
-# remove possible gap day
-if not start_year % 4:
-    T = T[:-1,:,:]
+# # remove possible gap day
+# if not start_year % 4:
+#     T = T[:-1,:,:]
 
-for year in range(start_year, end_year):
+# for year in range(start_year, end_year):
 
-    # append yearly data
-    T = np.append(T, read_air_data(year, latlon=False), axis=0)
+#     # append yearly data
+#     T = np.append(T, read_air_data(year, latlon=False), axis=0)
 
-    # remove possible gap days
-    if not year % 4:
-        T = T[:-1,:,:]
+#     # remove possible gap days
+#     if not year % 4:
+#         T = T[:-1,:,:]
 
-T0 = np.copy(T) # actual temperature measurements
+# T0 = np.copy(T) # actual temperature measurements
 
-T1 = avoid_seasonality(T) # seasonality removed measurements
+# T1 = avoid_seasonality(T) # seasonality removed measurements
+
+with open('temp_data_1948_2021.npy', 'rb') as f:
+    T1 = np.load(f)
+    lat = np.load(f)
+    lon = np.load(f)
 
 tau_max=200
 year = 1963
@@ -49,7 +54,7 @@ for tau in range(-tau_max, tau_max+1):
     t_out = T_out[:,tau_max+tau:tau_max+days+tau]
 
     # append corrcoefs for specific offset
-    temp[:,:,tau] = pearson_coeffs(t_in, t_out)
+    temp[:,:,tau_max+tau] = pearson_coeffs(t_in, t_out)
 
 C = np.empty([n,m,4])
 
@@ -65,13 +70,17 @@ C[:,:,3] = np.std(temp, axis=2)
 outx, outy, inx, iny = 59, 14, 89, 35
 
 fig = plt.figure()
-plt.plot(T[start_date+31:start_date+31+365,iny,inx])
-plt.plot(T[start_date+31:start_date+31+365,outy,outx])
+plt.title(f"{year} anomalies")
+plt.plot(T1[start_date:start_date+365,iny,inx])
+plt.plot(T1[start_date:start_date+365,outy,outx])
+plt.savefig(f"./CNW-plots/{year}-anomalies.png")
 plt.show()
 
 outind = 4203
 
 fig = plt.figure()
+plt.title(f"{year} crosscoef progression")
 for i in range(57):
-    plt.plot(temp[i,outind,:])
+    plt.plot(np.arange(-200,201),temp[i,outind,::-1])
+plt.savefig(f"./CNW-plots/{year}-crosscoef-progression.png")
 plt.show()

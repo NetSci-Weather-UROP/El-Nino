@@ -19,7 +19,12 @@ else
 end
 
 function main()
-    years=1977:1987
+	if anom_impl == "2"
+    	years=1948:2021
+	else
+    	years=1977:1987
+	end
+
     data, lat, lon = get_data(; years=years)
 
 	if anom_impl == "1"

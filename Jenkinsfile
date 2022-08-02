@@ -20,7 +20,7 @@ pipeline {
 			parallel {
 				stage('Run Python') {
 					steps {
-						sh 'python3 ./nino.py'
+						sh 'python3 ./nino.py || { echo >> wait && false ; } '
 						archiveArtifacts artifacts: 'CNW-plots/*'
 						sh 'sleep 2'
 						sh 'echo >> wait'

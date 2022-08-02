@@ -20,7 +20,7 @@ pipeline {
 			parallel {
 				stage('Run Python') {
 					steps {
-						sh 'python3 ./nino.py || { echo >> wait && false ; } '
+						sh 'python3 ./nino.py || { sleep 2 && echo >> wait && false ; } '
 						archiveArtifacts artifacts: 'CNW-plots/*'
 						sh 'sleep 2'
 						sh 'echo >> wait'
@@ -28,6 +28,7 @@ pipeline {
 				}
 				stage('Run Julia') {
 					steps {
+						sh '[ -e wait ] && rm wait'
 						sh 'mkfifo wait'
 						sh 'cat wait'
 						sh 'julia -t 1 -O 3 -C native ./main.jl'

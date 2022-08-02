@@ -24,7 +24,7 @@ function main()
 	if anom_impl == "2"
     	years=1948:2021
 	else
-    	years=1977:1987
+    	years=1967:1977
 	end
 
     data, lat, lon = get_data(; years=years)
@@ -42,7 +42,7 @@ function main()
     println(enb_is)
     println(enb_js)
 
-    window = get_period(anomaly_data, findfirst(isequal(1982),years), 1) 
+    window = get_period(anomaly_data, findfirst(isequal(1972),years), 1) 
 
 	if c_impl == "1"
     	C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)

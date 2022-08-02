@@ -1,7 +1,9 @@
 #!/usr/bin/env julia
 
-using Pkg
-Pkg.add.(["HDF5","StatsBase","LoopVectorization"])
+if ! haskey(ENV, "PKG_UPD")
+	using Pkg
+	Pkg.add.(["HDF5","StatsBase","LoopVectorization"])
+end
 
 include("./nino.jl")
 using .OurNino

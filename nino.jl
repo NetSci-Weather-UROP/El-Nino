@@ -2,7 +2,7 @@
 
 module OurNino
 
-export get_data, get_anomaly, get_anomaly2, find_inside_indeces, get_period, c_i_j, c_i_j2, c_i_j3, in_weights
+export get_data, get_anomaly, get_anomaly2, find_inside_indeces, get_period, c_i_j, c_i_j2, c_i_j3, c_i_j4, in_weights
 
 using HDF5, Dates, StatsBase, LoopVectorization
 
@@ -47,7 +47,7 @@ end
 
 function cross_correlation(x, y)
     # Check if this looks right to you
-    return @turbo ((mean(x .* y) - mean(x) * mean(y)) /  std(x) / std(y))
+    return @turbo ((mean(x .* y) - mean(x) * mean(y)) /  std(x;corrected=false) / std(y;corrected=false))
 end
 
 function findmissing(x)
@@ -73,15 +73,15 @@ end
 
 function get_data(;years=1948:2021)
     A = read_air_data(years[1])
-    size_A = size(read(A["air"]))
-    lat = read(A["lat"])
+    size_A = size(read(A["air"])[:,2:(end-1),:])
+    lat = read(A["lat"])[2:(end-1)]
     lon = read(A["lon"])
     close(A)
     # This is a bit silly but it should work
     data = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
     for i in 1:length(years)
         A = read_air_data(years[i])
-        data[:,:,:,i] .= mean_air_data(read(A["air"])) # Discard Leap Years (:
+        data[:,:,:,i] .= mean_air_data(read(A["air"])[:,2:(end-1),:]) # Discard Leap Years (:
         close(A)
     end
     return data, lat, lon
@@ -239,6 +239,46 @@ function c_i_j3(data, is, js; lags=50:350)
                     lags.-200;
                 )
             )
+        end
+    end)
+    wait.(t)
+    return C, i_point_list, e_point_list
+end
+
+"""
+tau ranges from 0 to 150; negative taus are interpreted to correspond to c_j_i
+Computed with our cross_correlation()
+"""
+function c_i_j4(data, is, js; lags=150)
+    size_A = size(data)
+    interior_points = length(is)*length(js)
+    exterior_points = size_A[2] * size_A[3] - interior_points
+    C = Array{Float32}(undef, interior_points, exterior_points, lags*2+1)
+
+    i_point_list = [(i,j) for i in is for j in js]
+    e_point_list = [(i,j) for i in 1:size_A[2] for j in 1:size_A[3]]
+    e_point_list = setdiff(e_point_list, i_point_list)
+
+    t = Array{Task}(undef,interior_points*exterior_points*2)
+    c=0
+    @inbounds (for j in 1:length(e_point_list)
+        for i in 1:length(i_point_list)
+            c+=1
+            x1 = i_point_list[i]
+            x2 = e_point_list[j]
+            t[c] = Threads.@spawn for d in 0:lags
+                    C[i,j, 1+lags+d] = cross_correlation(
+                        @view(data[200:(200+364), x1[1], x1[2]]),
+                        @view(data[(200+d):(200+d+364), x2[1], x2[2]])
+                    )
+                end
+            c+=1
+            t[c] = Threads.@spawn for d in 1:lags
+                    C[i,j, 1+lags-d] = cross_correlation(
+                        @view(data[200:(200+364), x2[1], x2[2]]),
+                        @view(data[(200+d):(200+d+364), x1[1], x1[2]])
+                    )
+            end
         end
     end)
     wait.(t)

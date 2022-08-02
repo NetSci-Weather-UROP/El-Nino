@@ -42,7 +42,7 @@ function main()
     println(enb_is)
     println(enb_js)
 
-    window = get_period(anomaly_data, findfirst(isequal(1972),years), 1) 
+    window = get_period(anomaly_data, findfirst(isequal(1971),years), 348) 
 
 	if c_impl == "1"
     	C, i_point_list, e_point_list = c_i_j(window, enb_is, enb_js)
@@ -50,6 +50,8 @@ function main()
     	C, i_point_list, e_point_list = c_i_j2(window, enb_is, enb_js)
 	elseif c_impl == "3"
     	C, i_point_list, e_point_list = c_i_j3(window, enb_is, enb_js)
+	elseif c_impl == "4"
+		C, i_point_list, e_point_list = c_i_j4(window, enb_is, enb_js)
 	end
 
 	println(C[1:100])

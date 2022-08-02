@@ -1,5 +1,22 @@
 """
-Modified for evolution.py
+This is a modified version of utils.py that uses CuPy (GPU-accelerated w/ CUDA)
+to speed up the computation. This is partly an experiment to see how well
+(and if at all) it works with generating the large dataset to use for plotting
+the evolution data (recreating fig 3 in the PNAS paper). evolution.py calls
+year_series 12x68 times and so far this modified script has not created any 
+issues - it speeds up the calculations about thricefold.
+
+Note: 
+You will need to have the CUDA toolkit installed. CuPy and Numpy are
+basically interchangeable apart from converting from one format to another
+as evident in the code. Functions now take CuPy inputs for arrays and
+return CuPy arrays.
+
+Inconsistencies:
+This script is only up to date with the original utils.py committed on 21/07
+(bcbc30870e3538ac9c38c74307f2ba6a9e335855 by GR). It could be that some of the
+calcultions involved have been changed since then, in which case they are 
+not reflected in this script.
 """
 
 from calendar import c

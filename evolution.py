@@ -41,13 +41,13 @@ def bulk_compute(years, T):
     
     return results
 
-years_to_compute = np.arange(1958, 1974)
+years_to_compute = np.arange(1949, 2017)
 
 results = bulk_compute(years_to_compute, T)
 lat = cp.asnumpy(lat)
 lon = cp.asnumpy(lon)
 
-with open('bulk_temp.npy', 'wb') as f:
+with open('bulk_temp_1949_2016.npy', 'wb') as f:
         np.save(f, results)
         np.save(f, lat)
         np.save(f, lon)

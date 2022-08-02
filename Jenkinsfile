@@ -22,10 +22,14 @@ pipeline {
 					steps {
 						sh 'python3 ./nino.py'
 						archiveArtifacts artifacts: 'CNW-plots/*'
+						sh 'sleep 2'
+						sh 'echo >> wait'
 					}
 				}
 				stage('Run Julia') {
 					steps {
+						sh 'mkfifo wait'
+						sh 'cat wait'
 						sh 'julia -t 1 -O 3 -C native ./main.jl'
 					}
 				}

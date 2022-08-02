@@ -73,6 +73,7 @@ function main()
         OurNino.HDF5.@write file lon
 		OurNino.HDF5.@write file years
         OurNino.HDF5.@write file in_C
+		OurNino.HDF5.@write file window
     end
 
     return 0

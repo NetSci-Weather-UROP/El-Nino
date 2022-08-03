@@ -151,10 +151,10 @@ fig.align_ylabels([ax0, ax1, ax2])
 # we highlight the el-nino and la-nina years
 for i in range(68):
        if np.max(oni_data_flat[i*12 : (i+1)*12]) > 1:
-              ax0.axvspan(1950 + i - 0.2, 1950 + i + 0.2,
+              ax0.axvspan(1949 + i - 0.5, 1949 + i + 0.5,
                           alpha = 0.4, color = 'red')
-       if np.min(oni_data_flat[i*12 : (i+1)*12]) < -1:
-              ax0.axvspan(1950 + i - 0.2, 1950 + i + 0.2,
+       elif np.min(oni_data_flat[i*12 : (i+1)*12]) < -1:
+              ax0.axvspan(1949 + i - 0.5, 1949 + i + 0.5,
                           alpha = 0.4, color = 'blue')       
 
 # adjust final size and save to png

@@ -39,7 +39,10 @@ def anim(T, lat, lon):
     return
 
 
-def plot_data(lon, lat, data, min=None, max=None, name="plot", showplots=False):
+def plot_data(
+        lon, lat, data, min=None, max=None, name="plot", 
+        show=False, save=True
+    ):
 
     lon, lat = np.meshgrid(lon, lat)
     fig = plt.figure()
@@ -50,15 +53,15 @@ def plot_data(lon, lat, data, min=None, max=None, name="plot", showplots=False):
     map.drawparallels(np.arange(-90,90,30),labels=[1,0,0,0])
     map.drawmeridians(np.arange(0,360,60),labels=[0,0,0,1])
     cb = map.colorbar()
-    plt.savefig(f"./CNW-plots/{name}.png")
-    
-    if showplots:
+    if save:
+        plt.savefig(f"./CNW-plots/{name}.png")
+    if show:
         plt.show()
 
     return
 
 
-def run(years, showplots=False, saveplots=False):
+def run(years, show=False, save=False):
     for year in years:
         print("Computing year", year,"...")
         C, T_in, T_out = year_series(T, lat, lon, year)
@@ -68,12 +71,13 @@ def run(years, showplots=False, saveplots=False):
         # plotting
         N_plot, C_plot, W_plot = M[:,:,0], M[:,:,1], M[:,:,2]
 
-        plot_data(lon, lat, C_plot, min=-15, max=15, name=f"{year} in C",
-            showplots=showplots, saveplots=False)
-        plot_data(lon, lat, N_plot, min=0, max=57, name=f"{year} in N",
-            showplots=showplots, saveplots=False)
-        plot_data(lon, lat, W_plot, min=-100, max=100, name=f"{year} in W",
-            showplots=showplots, saveplots=False)
+        if any([show, save]):
+            plot_data(lon, lat, C_plot, min=-15, max=15, name=f"{year} in C",
+                show=show, save=save)
+            plot_data(lon, lat, N_plot, min=0, max=57, name=f"{year} in N",
+                show=show, save=save)
+            plot_data(lon, lat, W_plot, min=-100, max=100, name=f"{year} in W",
+                show=show, save=save)
     
     return
 

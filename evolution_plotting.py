@@ -148,9 +148,14 @@ yticks = ax2.yaxis.get_major_ticks()
 yticks[-1].label1.set_visible(False)
 fig.align_ylabels([ax0, ax1, ax2])
 
-# placeholder for plotting tiles
-#ax1.axvspan(1971.8, 1972.2, alpha=0.5, color='red')
-#ax2.axvspan(1971.8, 1972.2, alpha=0.5, color='red')
+# we highlight the el-nino and la-nina years
+for i in range(68):
+       if np.max(oni_data_flat[i*12 : (i+1)*12]) > 1:
+              ax0.axvspan(1950 + i - 0.2, 1950 + i + 0.2,
+                          alpha = 0.4, color = 'red')
+       if np.min(oni_data_flat[i*12 : (i+1)*12]) < -1:
+              ax0.axvspan(1950 + i - 0.2, 1950 + i + 0.2,
+                          alpha = 0.4, color = 'blue')       
 
 # adjust final size and save to png
 fig.set_size_inches(16, 6)

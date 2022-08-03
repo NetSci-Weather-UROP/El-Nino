@@ -40,9 +40,9 @@ def bulk_compute(years, T):
     print("Initialising dimensions and checking for errors...")
     C, T_in, T_out = year_series(T, lat, lon, 1972)  
 
-    # monthly offsets by the number of days
-    month_days = [0, 31, 28, 31, 30, 31, 
-                  30, 31, 31, 30, 31, 30]  # no leap years (consistent)
+    # monthly offsets by the number of days (starting July 1st)
+    month_days = [0, 31, 31, 30, 31, 30, 
+                  31, 31, 28, 31, 30, 31]  # no leap years (consistent)
 
     # initialise an empty results array (2077 is arbitrary - just for
     # ease of indexing years when plotting)

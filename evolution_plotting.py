@@ -5,11 +5,22 @@ graphs similar to fig 3 in the PNAS paper.
 Issues: this script is still a bit rough, with lots of debugging
 features intact and the plotting section all jumbled up. Cleanup 
 needed (eventually).
+
+The ONI data comes from https://psl.noaa.gov/enso/data.html
+under 'Time Series' instead of being calculated from the raw
+temperature measurements themselves. This is likely slightly
+different from how the plot is produced in the PNAS paper.
 """
 
 import numpy as np  # no CUDA required for this script
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+
+def process_oni(raw_file_name):
+       data_matrix = np.loadtxt(raw_file_name, usecols = range(13))
+       data_matrix = np.delete(data_matrix, 0, 1)
+       print('Dimension of raw ONI data array: ', 
+              np.shape(data_matrix))
 
 # returns a w-moving average array (edges not included)
 def moving_average(x, w):
@@ -96,7 +107,8 @@ plt.xticks(rotation = 45)  # rotate year labels
 ax0.xaxis.grid(True)
 ax1.xaxis.grid(True)
 n = 5  # Keeps every 5th year label
-[l.set_visible(False) for (i,l) in enumerate(ax1.xaxis.get_ticklabels()) if i % n != 0]
+[l.set_visible(False) for (i,l) in 
+ enumerate(ax1.xaxis.get_ticklabels()) if i % n != 0]
 
 # set y-axis (misc)
 yticks = ax1.yaxis.get_major_ticks()

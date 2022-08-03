@@ -105,30 +105,39 @@ print('Shape of flattened ONI data array: ', np.shape(oni_data_flat))
 fig = plt.figure()
 gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1]) # set subplots
 
-# N_y subplot
+# ONI subplot
 ax0 = plt.subplot(gs[0])
-ax0.set_ylabel('$N^y$', fontsize = 16)
-plot0, = ax0.plot(year_labels, n_y_moving_average_adjusted,
-                  c = 'purple')
+ax0.set_ylabel('$ONI$', fontsize = 16)
+plot0, = ax0.plot(year_labels, oni_data_flat, c = 'darkgreen')
+ax0.axhline(y = 1, c = 'red', linestyle = 'dotted')
+ax0.axhline(y = -1, c = 'blue', linestyle = 'dotted')
 
-# with N_y plotted we adjust the x-axis
+# with ax0 (ONI) plotted we adjust the x-axis
 plt.xticks(np.arange(1950, 2016, 1))  # set ticks to one per year only
 plt.xlim([1950, 2015])  # only plot 1950-2015 ('results' covers it)
+
+# N_y subplot
+ax1 = plt.subplot(gs[1], sharex = ax0)
+ax1.set_ylabel('$N^y$', fontsize = 16)
+plot1, = ax1.plot(year_labels, n_y_moving_average_adjusted,
+                  c = 'purple')
 
 # C_y subplot
 ax2 = plt.subplot(gs[2], sharex = ax0)  # shared x-axis
 ax2.set_ylabel('$C^y$', fontsize = 16)
-plot1, = ax2.plot(year_labels, c_y_moving_average_adjusted,
+plot2, = ax2.plot(year_labels, c_y_moving_average_adjusted,
                   c = 'navy')
 
 # plot top and bottom with shared x-axis
 plt.setp(ax0.get_xticklabels(), visible=False)
+plt.setp(ax1.get_xticklabels(), visible=False)
 plt.subplots_adjust(hspace=.0)
 
 # set x-axis (misc)
 ax2.set_xlabel('Year', fontsize = 16)
 plt.xticks(rotation = 45)  # rotate year labels
 ax0.xaxis.grid(True)
+ax1.xaxis.grid(True)
 ax2.xaxis.grid(True)
 n = 5  # Keeps every 5th year label
 [l.set_visible(False) for (i,l) in 
@@ -137,11 +146,11 @@ n = 5  # Keeps every 5th year label
 # set y-axis (misc)
 yticks = ax2.yaxis.get_major_ticks()
 yticks[-1].label1.set_visible(False)
-fig.align_ylabels([ax0, ax2])
+fig.align_ylabels([ax0, ax1, ax2])
 
 # placeholder for plotting tiles
-#ax0.axvspan(1971.8, 1972.2, alpha=0.5, color='red')
 #ax1.axvspan(1971.8, 1972.2, alpha=0.5, color='red')
+#ax2.axvspan(1971.8, 1972.2, alpha=0.5, color='red')
 
 # adjust final size and save to png
 fig.set_size_inches(16, 6)

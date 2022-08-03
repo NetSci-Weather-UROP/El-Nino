@@ -30,7 +30,21 @@ with open('temp_data_1948_2021.npy', 'rb') as f:
     lon = np.load(f)
 
 tau_max=200
-year = 1963
+
+# year = 2009
+# loc = "Mozambique"
+# outx, outy = 13, 44
+
+# year = 2002
+# loc = "India"
+# outx, outy = 30, 24
+
+year = 2010
+loc = "Australia"
+outx, outy = 57, 45
+
+print(loc, lon[outx], lat[outy])
+
 start_date = find_start_date(1, 7) + (year-start_year)*365
 end_date = start_date + 565
 
@@ -67,20 +81,38 @@ C[:,:,2] = np.mean(temp, axis=2)
 # standard deviation over  all theta
 C[:,:,3] = np.std(temp, axis=2)
 
-outx, outy, inx, iny = 59, 14, 89, 35
+M = reformat_c(C, T_out)
+
+inx, iny = 89, 35
+
+# fig = plt.figure()
+# plt.title(f"{year} anomalies")
+# plt.plot(T1[start_date:start_date+365,iny,inx])
+# plt.plot(T1[start_date:start_date+365,outy,outx])
+# plt.savefig(f"./CNW-plots/{year}-anomalies.png")
+# plt.show()
+
+outind = list(
+    set(
+        np.where(T_out[:,-2]==outx)[0]
+    ).intersection(set(np.where(T_out[:,-1]==outy)[0]))
+)[0]
+
+inind = list(
+    set(
+        np.where(T_in[:,-2]==inx)[0]
+    ).intersection(set(np.where(T_in[:,-1]==iny)[0]))
+)[0]
+
+# fig = plt.figure()
+# plt.title(f"{year} crosscoef progression")
+# for i in range(57):
+#     plt.plot(np.arange(-200,201),temp[i,outind,::-1])
+# plt.savefig(f"./CNW-plots/{year}-crosscoef-progression.png")
+# plt.show()
 
 fig = plt.figure()
-plt.title(f"{year} anomalies")
-plt.plot(T1[start_date:start_date+365,iny,inx])
-plt.plot(T1[start_date:start_date+365,outy,outx])
-plt.savefig(f"./CNW-plots/{year}-anomalies.png")
-plt.show()
-
-outind = 4203
-
-fig = plt.figure()
-plt.title(f"{year} crosscoef progression")
-for i in range(57):
-    plt.plot(np.arange(-200,201),temp[i,outind,::-1])
-plt.savefig(f"./CNW-plots/{year}-crosscoef-progression.png")
+plt.title(f"{year} crosscoef in {loc}")
+plt.plot(np.arange(-200,201),temp[inind,outind,:])
+plt.savefig(f"./CNW-plots/{year}-crosscoef-{loc}.png")
 plt.show()

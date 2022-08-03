@@ -17,14 +17,30 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 
 def process_oni(raw_file_name):
+       """
+       Process ONI data - return processed array to plot.
+       """
+       # read into data matrix and drop year column
        data_matrix = np.loadtxt(raw_file_name, usecols = range(13))
        data_matrix = np.delete(data_matrix, 0, 1)
        print('Dimension of raw ONI data array: ', 
               np.shape(data_matrix))
+       
+       # adjust to years starting with July 1st & consistent 
+       # with later parts
+       data_matrix = np.roll(data_matrix, -6)
+       data_matrix = np.concatenate((np.zeros([1, 12]), 
+                                     data_matrix), axis=0)
+       data_matrix = np.delete(data_matrix, -1, 0)
 
-# returns a w-moving average array (edges not included)
+       return data_matrix
+       
+       
 def moving_average(x, w):
-    return np.convolve(x, np.ones(w), 'valid') / w
+       """
+       Returns a w-moving average array (edges not included).
+       """
+       return np.convolve(x, np.ones(w), 'valid') / w
 
 # load data 
 with open('bulk_temp_1949_2016.npy', 'rb') as f:
@@ -79,42 +95,51 @@ for i in range(12):
     year_labels[:, i] = years + i/12  # 12 months under each year
 year_labels = year_labels.flatten()  # final array to use as x-axis
 
+# process ONI data to plot
+raw_file_name = 'noaa_oni_raw_data.txt'
+oni_data = process_oni(raw_file_name)
+oni_data_flat = oni_data.flatten()
+print('Shape of flattened ONI data array: ', np.shape(oni_data_flat))
+
 # begin plotting
 fig = plt.figure()
-gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1]) # set subplots
+gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1]) # set subplots
 
 # N_y subplot
 ax0 = plt.subplot(gs[0])
 ax0.set_ylabel('$N^y$', fontsize = 16)
-plot0, = ax0.plot(year_labels, n_y_moving_average_adjusted, c = 'purple')
+plot0, = ax0.plot(year_labels, n_y_moving_average_adjusted,
+                  c = 'purple')
 
 # with N_y plotted we adjust the x-axis
 plt.xticks(np.arange(1950, 2016, 1))  # set ticks to one per year only
 plt.xlim([1950, 2015])  # only plot 1950-2015 ('results' covers it)
 
 # C_y subplot
-ax1 = plt.subplot(gs[1], sharex = ax0)  # shared x-axis
-ax1.set_ylabel('$C^y$', fontsize = 16)
-plot1, = ax1.plot(year_labels, c_y_moving_average_adjusted, c = 'navy')
+ax2 = plt.subplot(gs[2], sharex = ax0)  # shared x-axis
+ax2.set_ylabel('$C^y$', fontsize = 16)
+plot1, = ax2.plot(year_labels, c_y_moving_average_adjusted,
+                  c = 'navy')
 
 # plot top and bottom with shared x-axis
 plt.setp(ax0.get_xticklabels(), visible=False)
 plt.subplots_adjust(hspace=.0)
 
 # set x-axis (misc)
-ax1.set_xlabel('Year', fontsize = 16)
+ax2.set_xlabel('Year', fontsize = 16)
 plt.xticks(rotation = 45)  # rotate year labels
 ax0.xaxis.grid(True)
-ax1.xaxis.grid(True)
+ax2.xaxis.grid(True)
 n = 5  # Keeps every 5th year label
 [l.set_visible(False) for (i,l) in 
- enumerate(ax1.xaxis.get_ticklabels()) if i % n != 0]
+ enumerate(ax2.xaxis.get_ticklabels()) if i % n != 0]
 
 # set y-axis (misc)
-yticks = ax1.yaxis.get_major_ticks()
+yticks = ax2.yaxis.get_major_ticks()
 yticks[-1].label1.set_visible(False)
-fig.align_ylabels([ax0, ax1])
+fig.align_ylabels([ax0, ax2])
 
+# placeholder for plotting tiles
 #ax0.axvspan(1971.8, 1972.2, alpha=0.5, color='red')
 #ax1.axvspan(1971.8, 1972.2, alpha=0.5, color='red')
 

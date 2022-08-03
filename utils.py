@@ -243,6 +243,27 @@ def comp_c(T_in, T_out, tau_max=200):
     return C
 
 
+def reformat_c(C, T_out):
+    """
+    return M, containing local C, N, W data (plottable with latlon=True)
+    """
+    M = np.empty([
+        np.max(T_out[:,-1]+1).astype(int), np.max(T_out[:,-2]+1).astype(int), 3
+    ])
+
+    M_N = np.sum((0 <=C[:,:,1])*(C[:,:,1] < 151), axis=0)
+    M_C = np.sum(C[:,:,0], axis=0)
+    M_W = np.sum((C[:,:,0]-C[:,:,2])/C[:,:,3], axis=0)
+
+    i = 0
+    for line in T_out:
+        coord1, coord2 = line[-1].astype(int), line[-2].astype(int)
+        M[coord1, coord2,:] = [M_N[i], M_C[i], M_W[i]]
+        i += 1
+
+    return M
+
+
 def year_series(
         T, lat, lon, year, start_year=1948, window_day=1, window_month=7
     ):

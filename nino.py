@@ -58,27 +58,22 @@ def plot_data(lon, lat, data, min=None, max=None, name="plot", showplots=False):
     return
 
 
-def run(years, showplots=False):
+def run(years, showplots=False, saveplots=False):
     for year in years:
         print("Computing year", year,"...")
         C, T_in, T_out = year_series(T, lat, lon, year)
 
-        in_degree = np.sum((0 <=C[:,:,1])*(C[:,:,1] < 151), axis=0)
-
+        M = reformat_c(C, T_out)
 
         # plotting
-        C_plot = np.empty([71,144])
-        N_plot = np.empty([71,144])
-        W_plot = np.empty([71,144])
-        C_plot[T_out[:,-1].astype(int), T_out[:,-2].astype(int)] = np.sum(C[:,:,0], axis=0)
-        N_plot[T_out[:,-1].astype(int), T_out[:,-2].astype(int)] = in_degree
-        W_plot[T_out[:,-1].astype(int), T_out[:,-2].astype(int)] = np.sum(
-            (C[:,:,0]-C[:,:,2])/C[:,:,3], axis=0
-        )
+        N_plot, C_plot, W_plot = M[:,:,0], M[:,:,1], M[:,:,2]
 
-        plot_data(lon, lat, C_plot, min=-15, max=15, name=f"{year} in C", showplots=showplots)
-        plot_data(lon, lat, N_plot, min=0, max=57, name=f"{year} in N", showplots=showplots)
-        plot_data(lon, lat, W_plot, min=-100, max=100, name=f"{year} in W", showplots=showplots)
+        plot_data(lon, lat, C_plot, min=-15, max=15, name=f"{year} in C",
+            showplots=showplots, saveplots=False)
+        plot_data(lon, lat, N_plot, min=0, max=57, name=f"{year} in N",
+            showplots=showplots, saveplots=False)
+        plot_data(lon, lat, W_plot, min=-100, max=100, name=f"{year} in W",
+            showplots=showplots, saveplots=False)
     
     return
 

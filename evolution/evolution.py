@@ -9,7 +9,7 @@ import netCDF4 as nc
 import numpy as np
 import cupy as cp
 import matplotlib.pyplot as plt
-from utils import *
+from ..utils import *
 
 def bulk_compute(years, T):
     """
@@ -81,7 +81,7 @@ def bulk_compute(years, T):
     return results  # note that we are returning NumPy not CuPy
 
 # loading the data generate in nino.py
-with open('temp_data_1948_2021.npy', 'rb') as f:
+with open('../temp_data_1948_2021.npy', 'rb') as f:
     T = np.load(f)
     lat = np.load(f)
     lon = np.load(f)

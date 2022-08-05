@@ -55,7 +55,7 @@ def moving_average(x, w):
        return np.convolve(x, np.ones(w), 'valid') / w
 
 # load data 
-with open('bulk_temp_1949_2016.npy', 'rb') as f:
+with open('./bulk_temp_1949_2016.npy', 'rb') as f:
     results = np.load(f)
     lat = np.load(f)
     lon = np.load(f)

@@ -12,6 +12,7 @@ temperature measurements themselves. This is likely slightly
 different from how the plot is produced in the PNAS paper.
 """
 
+from re import I
 import numpy as np  # no CUDA required for this script
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -34,6 +35,17 @@ def process_oni(raw_file_name):
        data_matrix = np.delete(data_matrix, -1, 0)
 
        return data_matrix
+
+def draw_year(i, c):
+       """
+       Colour in a selected time.
+       """
+       ax0.axvspan(1949 + i, 1949 + i + 1,
+                          alpha = 0.3, color = c)
+       ax1.axvspan(1949 + i, 1949 + i + 1,
+                          alpha = 0.3, color = c)
+       ax2.axvspan(1949 + i, 1949 + i + 1,
+                          alpha = 0.3, color = c)
        
        
 def moving_average(x, w):
@@ -134,7 +146,7 @@ plt.setp(ax1.get_xticklabels(), visible=False)
 plt.subplots_adjust(hspace=.0)
 
 # set x-axis (misc)
-ax2.set_xlabel('Year', fontsize = 16)
+ax2.set_xlabel('Year (July 1st to June 30th the consecutive year)', fontsize = 16)
 plt.xticks(rotation = 45)  # rotate year labels
 ax0.xaxis.grid(True)
 ax1.xaxis.grid(True)
@@ -151,11 +163,9 @@ fig.align_ylabels([ax0, ax1, ax2])
 # we highlight the el-nino and la-nina years
 for i in range(68):
        if np.max(oni_data_flat[i*12 : (i+1)*12]) > 1:
-              ax0.axvspan(1949 + i - 0.5, 1949 + i + 0.5,
-                          alpha = 0.4, color = 'red')
+              draw_year(i, 'red')
        elif np.min(oni_data_flat[i*12 : (i+1)*12]) < -1:
-              ax0.axvspan(1949 + i - 0.5, 1949 + i + 0.5,
-                          alpha = 0.4, color = 'blue')       
+              draw_year(i, 'blue')      
 
 # adjust final size and save to png
 fig.set_size_inches(16, 6)

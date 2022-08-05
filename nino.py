@@ -97,7 +97,7 @@ with open('temp_data_1948_2021.npy', 'rb') as f:
     lat = np.load(f)
     lon = np.load(f)
 
-run([1959, 1972], showplots=True)
+run([1959, 1972], show=True)
 
 ### total runtime: ~16s 
 ### (~0.5s for loading and ~15.5s for running over one period window)

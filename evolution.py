@@ -9,8 +9,7 @@ import netCDF4 as nc
 import numpy as np
 import cupy as cp
 import matplotlib.pyplot as plt
-from utils_cupy import *  # utils_cupy functions are used - see script
-                          # docstring for more information
+from utils import *
 
 def bulk_compute(years, T):
     """
@@ -47,9 +46,9 @@ def bulk_compute(years, T):
     # initialise an empty results array (2077 is arbitrary - just for
     # ease of indexing years when plotting)
     results = np.empty([2077, 
-                        12, 2, cp.shape(T_out)[0]])
+                        12, 2, np.shape(T_out)[0]])
     print("The empty result array has shape: ",
-           cp.shape(results))
+           np.shape(results))
 
     # computing data
     for shift_index in range(12):  # monthly offset from 0 to 11
@@ -61,7 +60,9 @@ def bulk_compute(years, T):
         e.g. a year in the original data would go from June to June,
         but a 2-month offset makes it August to August, and so on.
         """
+        T = cp.asarray(T)
         T = cp.roll(T, -month_days[shift_index], axis = 0)  # bit slow
+        T = cp.asnumpy(T)
 
         for year in years:
             print("Computing year:", year, "; shift:", shift_index)
@@ -70,12 +71,12 @@ def bulk_compute(years, T):
             C, T_in, T_out = year_series(T, lat, lon, year) 
 
             # calculate in-weights and in-links
-            in_N = cp.sum((C[:,:,1] < 151), axis = 0)
-            in_C = cp.sum(C[:,:,0], axis = 0)
+            in_N = np.sum((C[:,:,1] < 151), axis = 0)
+            in_C = np.sum(C[:,:,0], axis = 0)
 
             # store results in corresponding year and offset amount
-            results[year, shift_index, 0, :] = cp.asnumpy(in_C)
-            results[year, shift_index, 1, :] = cp.asnumpy(in_N)
+            results[year, shift_index, 0, :] = in_C
+            results[year, shift_index, 1, :] = in_N
     
     return results  # note that we are returning NumPy not CuPy
 
@@ -86,16 +87,16 @@ with open('temp_data_1948_2021.npy', 'rb') as f:
     lon = np.load(f)
 
 # convert to CuPy
-T = cp.asarray(T)
-lat = cp.asarray(lat)
-lon = cp.asarray(lon)
+# T = cp.asarray(T)
+# lat = cp.asarray(lat)
+# lon = cp.asarray(lon)
 
 # we only need this interval to plot the evolution graph
 years_to_compute = np.arange(1949, 2017)
 results = bulk_compute(years_to_compute, T)
 # these might not be relevant but I've kept them for now
-lat = cp.asnumpy(lat)
-lon = cp.asnumpy(lon)
+# lat = cp.asnumpy(lat)
+# lon = cp.asnumpy(lon)
 
 # save in npy file for plotting and more
 with open('bulk_temp_1949_2016.npy', 'wb') as f:

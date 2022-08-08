@@ -6,6 +6,7 @@ import networkx as nx
 import numpy as np
 import cartopy.crs as ccrs
 from cartopy.io import shapereader as shpreader
+from pyvis.network import Network
 import matplotlib.pyplot as plt
 import sys
 import inspect
@@ -28,7 +29,9 @@ in the directory above without us using a package:
 https://stackoverflow.com/questions/714063/importing-modules-
 from-parent-folder
 """
-currentdir = path.dirname(path.abspath(inspect.getfile(inspect.currentframe())))
+currentdir = path.dirname(path.abspath(
+                          inspect.getfile(
+                          inspect.currentframe())))
 parentdir = path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 from utils import *
@@ -46,13 +49,44 @@ pos = {
 }
 
 G = nx.from_edgelist(edges)
-sg = next(G.subgraph(c) for c in nx.connected_components(G))
+sg = next(G.subgraph(c) for c in 
+          nx.connected_components(G))
 
 # get year data
 year = 1972
-print("Computing data for year: ", year)
+print("Computing data for year:", year)
 C, T_in, T_out = year_series(T, lat, lon, year)
+print("Dimension of C matrix:", np.shape(C))
 
+C_link = (C[:,:,1] < 151)
+print("Dimension of C_link matrix:", np.shape(C_link))
+
+node_sum = np.shape(C_link)[0] + np.shape(C_link)[1]
+print("node_sum:", node_sum)
+A_ij = np.zeros([node_sum, node_sum])
+A_ij[0 : np.shape(C_link)[0],
+     np.shape(C_link)[0] : node_sum] = C_link
+A_ij[np.shape(C_link)[0] : node_sum,
+     0 : np.shape(C_link)[0]] = C_link.transpose()
+
+A_ij = A_ij[:200, :200]
+
+print("Dimension of A_ij adjacency matrix",
+      np.shape(A_ij))
+
+G = nx.from_numpy_matrix(A_ij, parallel_edges = False)
+print(G.number_of_edges())
+
+fig = plt.figure(figsize=(100, 100)) 
+# pos = nx.planar_layout(G)
+gcc = max(nx.connected_components(G), key=lambda x: len(x))
+H = G.subgraph(gcc)
+nx.draw(H, node_size=10) 
+plt.axis('equal') 
+plt.show() 
+fig.savefig('test.png')
+
+"""
 # draw background map
 crs = ccrs.PlateCarree(central_longitude = 178.75)
 fig, ax = plt.subplots(
@@ -68,5 +102,6 @@ nx.draw_networkx(sg, ax=ax,
                  width=2,
                  pos=pos,
                  cmap=plt.cm.autumn)
+"""
                  
-plt.show()
+#plt.show()

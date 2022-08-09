@@ -319,3 +319,256 @@ function in_weights(C, i_point_list, e_point_list, l_lon, l_lat; lags=50:350)
     return in_C
 end
 end
+
+module CudaNino
+
+using CUDA, Main.OurNino
+
+function cu_sums!(sums, data, lags)
+    tI=threadIdx()
+    bD=blockDim()
+    gI=blockIdx()
+    gD=gridDim()
+    
+    x_initial = tI.x
+    x_step = bD.x
+
+    y_initial = tI.y
+    y_step = bD.y
+
+    z_inital = gI.x
+    z_step = gD.x
+
+    @inbounds (for x in x_initial:x_step:size(data, 2)
+        for y in y_initial:y_step:size(data, 3)
+            for z in z_inital:z_step:size(lags,1)
+                for i in lags[z]:(lags[z]+364)
+                    sums[z,x,y] += data[200+i,x,y]
+                end
+            end
+        end
+    end)
+
+end
+
+function cu_sum2s!(sums, data, lags)
+    tI=threadIdx()
+    bD=blockDim()
+    gI=blockIdx()
+    gD=gridDim()
+    
+    x_initial = tI.x
+    x_step = bD.x
+
+    y_initial = tI.y
+    y_step = bD.y
+
+    z_inital = gI.x
+    z_step = gD.x
+
+    @inbounds (for x in x_initial:x_step:size(data, 2)
+        for y in y_initial:y_step:size(data, 3)
+            for z in z_inital:z_step:size(lags,1)
+                for i in lags[z]:(lags[z]+364)
+                    sums[z,x,y] += data[200+i,x,y]^2
+                end
+            end
+        end
+    end)
+end
+
+function cu_final_1!(C, means, data, lags, n)
+    tI=threadIdx()
+    bD=blockDim()
+    gI=blockIdx()
+    gD=gridDim()
+    
+    x_initial = tI.x
+    x_step = bD.x
+
+    y_initial = tI.y
+    y_step = bD.y
+
+    z_inital = gI.x
+    z_step = gD.x
+
+    @inbounds (for x in x_initial:x_step:size(data, 2)
+        for y in y_initial:y_step:size(data, 3)
+            for z in z_inital:z_step:size(lags,1)
+                for x_alt in axes(data,2)
+                    for y_alt in axes(data,3)
+                            C[x,y, x_alt, y_alt, z] -=
+                            means[n,x,y] * means[z, x_alt, y_alt]
+                    end
+                end
+            end
+        end
+    end)
+end
+
+function cu_final_2!(C, stdevs, data, lags, n)
+    tI=threadIdx()
+    bD=blockDim()
+    gI=blockIdx()
+    gD=gridDim()
+    
+    x_initial = tI.x
+    x_step = bD.x
+
+    y_initial = tI.y
+    y_step = bD.y
+
+    z_inital = gI.x
+    z_step = gD.x
+
+    @inbounds (for x in x_initial:x_step:size(data, 2)
+        for y in y_initial:y_step:size(data, 3)
+            for z in z_inital:z_step:size(lags,1)
+                for x_alt in axes(data,2)
+                    for y_alt in axes(data,3)
+                            C[x,y, x_alt, y_alt, z] /=
+                            stdevs[n,x,y] * stdevs[z, x_alt, y_alt]
+                    end
+                end
+            end
+        end
+    end)
+end
+
+function cu_dots!(dots, data, lags)
+    tI=threadIdx()
+    bD=blockDim()
+    gI=blockIdx()
+    gD=gridDim()
+    
+    x_initial = tI.x
+    x_step = bD.x
+
+    y_initial = tI.y
+    y_step = bD.y
+
+    z_inital = gI.x
+    z_step = gD.x
+
+    @inbounds (for x in x_initial:x_step:size(data, 2)
+        for y in y_initial:y_step:size(data, 3)
+            for z in z_inital:z_step:size(lags,1)
+                for x_alt in axes(data,2)
+                    for y_alt in axes(data,3)
+                        for i in 0:364
+                            dots[x,y, x_alt, y_alt, z] += 
+                            data[200+i,x,y] * data[200+lags[z]+i, x_alt, y_alt]
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+function c_i_j_full(data; lags=(-150):25:150)
+        lags = CuArray(lags)
+        size_A = size(data)
+        npoints = size_A[2] * size_A[3]
+        println(size_A)
+        C = CuArray{Float32}(undef, size_A[2], size_A[3], size_A[2], size_A[3], length(lags))
+        data = CuArray{Float32}(data)
+
+        means = CuArray{Float32}(undef, length(lags), size_A[2], size_A[3])
+        
+        sum_kernel = @cuda launch=false cu_sums!(means, data, lags)
+        sum_config = launch_configuration(sum_kernel.fun)
+
+        println(sum_config)
+        
+        t1 = min(sum_config[:threads], size_A[2])
+        t2 = min(fld(sum_config[:threads], t1), size_A[3])
+        t4 = min(sum_config[:blocks], length(lags))
+
+        sum_kernel(means, data, lags;threads=(t1,t2), blocks=t4)
+
+        mean2s = CuArray{Float32}(undef, length(lags), size_A[2], size_A[3])
+
+        sum2_kernel = @cuda launch=false cu_sum2s!(mean2s, data, lags)
+        sum2_config = launch_configuration(sum2_kernel.fun)
+
+        println(sum2_config)
+
+        t1 = min(sum2_config[:threads], size_A[2])
+        t2 = min(fld(sum2_config[:threads], t1), size_A[3])
+        t4 = min(sum2_config[:blocks], length(lags))
+
+        sum2_kernel(mean2s, data, lags;threads=(t1,t2), blocks=t4)
+
+        dots_kernel = @cuda launch=false cu_dots!(C, data, lags)
+        dots_config = launch_configuration(dots_kernel.fun)
+
+        println(dots_config)
+
+        t1 = min(dots_config[:threads], size_A[2])
+        t2 = min(fld(dots_config[:threads], t1), size_A[3])
+        t4 = min(dots_config[:blocks], length(lags))
+
+        dots_kernel(C, data, lags;threads=(t1,t2), blocks=t4)
+
+        CUDA.synchronize()
+
+        means ./= 365
+        mean2s ./= 365
+        C ./= 365
+
+        CUDA.synchronize()
+        n=findfirst(isequal(0), lags)
+        final_1_kernel = @cuda launch=false cu_final_1!(C, means, data, lags, n)
+        final_1_config = launch_configuration(final_1_kernel.fun)
+
+        println(final_1_config)
+
+        t1 = min(final_1_config[:threads], size_A[2])
+        t2 = min(fld(final_1_config[:threads], t1), size_A[3])
+        t4 = min(final_1_config[:blocks], length(lags))
+
+        final_1_kernel(C, means, data, lags, n;threads=(t1,t2), blocks=t4)
+        
+        stdevs = sqrt.(mean2s - (means.^2))
+        
+        CUDA.synchronize()
+
+        final_2_kernel = @cuda launch=false cu_final_2!(C, means, data, lags, n)
+        final_2_config = launch_configuration(final_2_kernel.fun)
+
+        println(final_2_config)
+
+        t1 = min(final_2_config[:threads], size_A[2])
+        t2 = min(fld(final_2_config[:threads], t1), size_A[3])
+        t4 = min(final_2_config[:blocks], length(lags))
+
+        final_2_kernel(C, stdevs, data, lags, n;threads=(t1,t2), blocks=t4)
+    
+        CUDA.synchronize()
+
+        return Array(C)
+end
+
+function full_in_weights(data, is, js, l_lon, l_lat; lags=(-150):25:150)
+    
+    in_C = zeros(Float32, l_lon, l_lat)
+    @inbounds (for i in axes(in_C, 1)
+        for j in axes(in_C, 2)
+            for x in axes(in_C, 1)
+                for y in axes(in_C,2)
+                    if x in is && y in js && !( i in is && j in js)
+                        θ = findmax(abs, data[x,y,i,j,:])[2]
+                        #println(data[x,y,i,j,:])
+                        #println(x, " ", y, " ", i, " ", j, " ", θ)
+                        in_C[i,j] += (i!=j) * Main.OurNino.H(lags[θ]) * data[x,y,i,j,θ]
+                    end
+                end
+            end
+        end
+    end)
+
+    return in_C
+end
+
+end

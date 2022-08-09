@@ -63,12 +63,12 @@ point_pos = {}
 
 i = 0
 for point in T_in:
-    coord1, coord2 = point[-1].astype(int), point[-2].astype(int)
-    point_pos.update({i:[coord1, coord2]})
+    coord1, coord2 = point[-2].astype(int), point[-1].astype(int)
+    point_pos.update({i:[(lon[coord1] + 178.25) % 360, lat[coord2]]})
     i += 1
 for point in T_out:
-    coord1, coord2 = point[-1].astype(int), point[-2].astype(int)
-    point_pos.update({i:[coord1, coord2]})
+    coord1, coord2 = point[-2].astype(int), point[-1].astype(int)
+    point_pos.update({i:[(lon[coord1] + 178.25) % 360, lat[coord2]]})
     i += 1
 
 color_map = []
@@ -78,35 +78,35 @@ for node in G:
     else: 
         color_map.append('blue')
 
-fig = plt.figure(figsize=(200, 200))
+# fig = plt.figure(figsize=(200, 200))
 # pos = nx.random_layout(G)
-s = 60
-G = G.subgraph(np.arange(s))
-color_map = color_map[:s]
+G = G.subgraph(np.arange(56, 10224))
+# color_map = color_map[:s]
 # gcc = max(nx.connected_components(G), key=lambda x: len(x))
 # H = G.subgraph(gcc)
-nx.draw(G, node_color = color_map, node_size=120, 
-         with_labels = True)
-plt.axis('equal')
-plt.show()
-fig.savefig('test.png')
+# nx.draw(G, node_color = color_map, node_size=120, 
+#          with_labels = True)
+# plt.axis('equal')
+# plt.show()
+# fig.savefig('test.png')
 
-"""
 # draw background map
-crs = ccrs.PlateCarree(central_longitude = 178.75)
+crs = ccrs.PlateCarree(central_longitude = 178.25)
 fig, ax = plt.subplots(
-    1, 1, figsize=(10.24, 7.68),
-    subplot_kw=dict(projection=crs))
+    1, 1, figsize=(200, 200),
+    subplot_kw = dict(projection = crs))
 ax.coastlines()
 ax.set_global()
 
 # draw network with networkx over catopy
-nx.draw_networkx(sg, ax=ax,
-                 font_size=16,
-                 alpha=1,
-                 width=2,
-                 pos=pos,
-                 cmap=plt.cm.autumn)
-"""
+nx.draw_networkx(G, ax = ax,
+                 font_size = 16,
+                 alpha = 0.8,
+                 width = 0.5,
+                 node_size = 15,
+                 with_labels = False,
+                 pos = point_pos,
+                 cmap = plt.cm.autumn)
 
-#plt.show()
+plt.show()
+fig.savefig('test.png')

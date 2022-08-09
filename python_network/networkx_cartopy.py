@@ -36,22 +36,6 @@ parentdir = path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 from utils import *
 
-# testing
-edges = np.array([['A', 'B'],
-                 ['B', 'C'],
-                 ['C', 'D'],
-                 ['C', 'A']])
-pos = {
-       'A': [150, 5], 
-       'B': [110, 15], 
-       'C': [140, -25], 
-       'D': [160, -30]
-}
-
-G = nx.from_edgelist(edges)
-sg = next(G.subgraph(c) for c in 
-          nx.connected_components(G))
-
 # get year data
 year = 1972
 print("Computing data for year:", year)
@@ -69,21 +53,42 @@ A_ij[0 : np.shape(C_link)[0],
 A_ij[np.shape(C_link)[0] : node_sum,
      0 : np.shape(C_link)[0]] = C_link.transpose()
 
-A_ij = A_ij[:200, :200]
-
 print("Dimension of A_ij adjacency matrix",
       np.shape(A_ij))
 
 G = nx.from_numpy_matrix(A_ij, parallel_edges = False)
 print(G.number_of_edges())
 
-fig = plt.figure(figsize=(100, 100)) 
-# pos = nx.planar_layout(G)
-gcc = max(nx.connected_components(G), key=lambda x: len(x))
-H = G.subgraph(gcc)
-nx.draw(H, node_size=10) 
-plt.axis('equal') 
-plt.show() 
+point_pos = {}
+
+i = 0
+for point in T_in:
+    coord1, coord2 = point[-1].astype(int), point[-2].astype(int)
+    point_pos.update({i:[coord1, coord2]})
+    i += 1
+for point in T_out:
+    coord1, coord2 = point[-1].astype(int), point[-2].astype(int)
+    point_pos.update({i:[coord1, coord2]})
+    i += 1
+
+color_map = []
+for node in G:
+    if node < 57:
+        color_map.append('red')
+    else: 
+        color_map.append('blue')
+
+fig = plt.figure(figsize=(200, 200))
+# pos = nx.random_layout(G)
+s = 60
+G = G.subgraph(np.arange(s))
+color_map = color_map[:s]
+# gcc = max(nx.connected_components(G), key=lambda x: len(x))
+# H = G.subgraph(gcc)
+nx.draw(G, node_color = color_map, node_size=120, 
+         with_labels = True)
+plt.axis('equal')
+plt.show()
 fig.savefig('test.png')
 
 """
@@ -103,5 +108,5 @@ nx.draw_networkx(sg, ax=ax,
                  pos=pos,
                  cmap=plt.cm.autumn)
 """
-                 
+
 #plt.show()

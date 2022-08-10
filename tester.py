@@ -39,9 +39,14 @@ tau_max=200
 # loc = "India"
 # outx, outy = 30, 24
 
-year = 2010
+year = 1972
 loc = "Australia"
 outx, outy = 57, 45
+
+# year = 1963
+# loc = "Sea of Okhotsk"
+# outx, outy = 59, 14
+
 
 print(loc, lon[outx], lat[outy])
 
@@ -83,14 +88,16 @@ C[:,:,3] = np.std(temp, axis=2)
 
 M = reformat_c(C, T_out)
 
-inx, iny = 89, 35
+inx, iny = 92, 36
 
-# fig = plt.figure()
-# plt.title(f"{year} anomalies")
-# plt.plot(T1[start_date:start_date+365,iny,inx])
-# plt.plot(T1[start_date:start_date+365,outy,outx])
-# plt.savefig(f"./CNW-plots/{year}-anomalies.png")
-# plt.show()
+print("in-location", lon[inx], lat[iny])
+
+fig = plt.figure()
+plt.title(f"{year} anomalies at {loc}, {outx*2.5}° lon {87.5-outy*2.5}° lat")
+plt.plot(T1[start_date:start_date+365,iny,inx])
+plt.plot(T1[start_date:start_date+365,outy,outx])
+plt.savefig(f"./CNW-plots/{year}-{loc}-anomalies.png")
+plt.show()
 
 outind = list(
     set(
@@ -104,15 +111,21 @@ inind = list(
     ).intersection(set(np.where(T_in[:,-1]==iny)[0]))
 )[0]
 
+print(
+    "out location", T_out[outind, -2]*2.5, 87.5-T_out[outind, -1]*2.5, "\n in location", T_in[inind, -2]*2.5, 87.5-T_in[inind, -1]*2.5
+)
+
 # fig = plt.figure()
 # plt.title(f"{year} crosscoef progression")
+# plt.ylim([-0.5,0.6])
 # for i in range(57):
-#     plt.plot(np.arange(-200,201),temp[i,outind,::-1])
-# plt.savefig(f"./CNW-plots/{year}-crosscoef-progression.png")
+#     plt.plot(np.arange(-200,201),temp[i,outind,::-1],linewidth=0.4)
+# # plt.savefig(f"./CNW-plots/{year}-crosscoef-progression.png")
 # plt.show()
 
 fig = plt.figure()
 plt.title(f"{year} crosscoef in {loc}")
+plt.ylim([-0.4,0.4])
 plt.plot(np.arange(-200,201),temp[inind,outind,:])
 plt.savefig(f"./CNW-plots/{year}-crosscoef-{loc}.png")
 plt.show()

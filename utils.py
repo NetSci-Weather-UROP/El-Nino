@@ -290,6 +290,21 @@ def year_series(
     return C, T_in, T_out
 
 
+def adjacency_filter(C, tolerance=1):
+    """
+    Takes `C` as output by `comp_c`.
+
+    `tolerance` sets how many standard deviations away are nulled:
+    [mu-tolerance*sd, mu+tolerance*sd] are set to zero to keep signifficant vals
+    """
+
+    weights = (C[:,:,0]-C[:,:,2])/C[:,:,3]
+    mu = np.mean(weights)
+    sd = np.std(weights)
+    filtered_weights = np.copy(weights)
+    filtered_weights *= (np.abs(weights) > mu+tolerance*sd)
+    return filtered_weights
+
 ##################### DEFUNCT
 
 # def season_indices(start_year, end_year, gap_years = False):

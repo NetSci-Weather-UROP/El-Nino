@@ -293,15 +293,18 @@ function H(x)
     end
 end
 
-function in_weights(C, i_point_list, e_point_list, l_lon, l_lat; lags=50:350)
-    lags=200 .- lags
-    size_C = size(C)
+function get_θ(C, size_C)
     θ = Array{Int64}(undef, size_C[1], size_C[2])
     for i in 1:size_C[1]
         for j in 1:size_C[2]
             θ[i,j] = findmax(abs,C[i,j,:])[2]
         end
     end
+	return 0
+end
+
+function in_weights(C, i_point_list, e_point_list, l_lon, l_lat, θ; lags=50:350)
+	lags = lags .- 200
     
     in_C = zeros(Float32, l_lon, l_lat)
 
@@ -311,7 +314,7 @@ function in_weights(C, i_point_list, e_point_list, l_lon, l_lat; lags=50:350)
             e_point = e_point_list[i,:]
 
             in_C[e_point[1], e_point[2]] += (
-                C[j,i,θ[j,i]]*H(lags[θ[j,i]])*(1-(i==j))
+				C[j,i,θ[j,i]]*H(lags[θ[j,i]])*(i!=j)*(abs(lags[θ[j,i]]) <= 150)
             )
         end
     end
@@ -602,7 +605,7 @@ function full_in_weights(data, is, js, l_lon, l_lat; lags=(-150):25:150)
                         θ = findmax(abs, data[x,y,i,j,:])[2]
                         #println(data[x,y,i,j,:])
                         #println(x, " ", y, " ", i, " ", j, " ", θ)
-                        in_C[i,j] += (i!=j) * Main.OurNino.H(lags[θ]) * data[x,y,i,j,θ]
+                        in_C[i,j] += (i!=j) * Main.OurNino.H(lags[θ]) * data[x,y,i,j,θ] * (abs(lags[θ]) <= 150)
                     end
                 end
             end

@@ -64,7 +64,8 @@ function main()
 
 	years = Array(years)
 
-    in_C = in_weights(C, i_point_list, e_point_list, length(lon), length(lat))
+	θ = get_θ(C, size(C))
+	in_C = in_weights(C, i_point_list, e_point_list, length(lon), length(lat), θ)
 
     OurNino.HDF5.h5open("generated_data.h5", "w") do file
         OurNino.HDF5.@write file C

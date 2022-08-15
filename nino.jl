@@ -2,7 +2,7 @@
 
 module OurNino
 
-export get_data, get_anomaly, get_anomaly2, find_inside_indeces, get_period, c_i_j, c_i_j2, c_i_j3, c_i_j4, in_weights
+export get_data, get_anomaly, get_anomaly2, find_inside_indeces, get_period, c_i_j, c_i_j2, c_i_j3, c_i_j4, c_i_j_full_cpu in_weights
 
 using HDF5, Dates, StatsBase, LoopVectorization
 
@@ -318,6 +318,47 @@ function in_weights(C, i_point_list, e_point_list, l_lon, l_lat; lags=50:350)
 
     return in_C
 end
+
+function c_i_j_full_cpu(data; lags=(-200):200, zero_index=200)
+    size_A = size(data)
+    data = permutedims(data, (2, 3, 1))
+    npoints = size_A[2] * size_A[3]
+    println(size_A)
+    println.([size_A[2], size_A[3], size_A[2], size_A[3], length(lags)])
+    C = Array{Float16}(undef, size_A[2], size_A[3], size_A[2], size_A[3], length(lags))
+    means = Array{Float16}(undef, size_A[2], size_A[3], length(lags))
+    mean2s = Array{Float16}(undef, size_A[2], size_A[3], length(lags))
+    println("Computing Means")
+    @inbounds (for i in axes(lags, 1)
+        local_data = data[:,:,(zero_index+lags[i]):(zero_index+lags[i]+364)]
+        means[:, :, i] .=  mean(local_data; dims=3)
+        mean2s[:, :, i] .= mean(x->x^2, local_data; dims=3)
+    end)
+    println("Computing stdevs")
+    stdevs = sqrt.(mean2s - (means.^2))
+    println("Computing dots")
+    @inbounds (for t in axes(lags, 1)
+        for j in axes(C,4)
+            for i in axes(C,2)
+                range = (zero_index):(zero_index+364)
+                range2 = (zero_index+lags[t]):(zero_index+lags[t]+364)
+                C[:,i,:,j, t] .= data[:,i,range] * transpose(data[:,j,range2])./365
+            end
+        end
+    end)
+    println("Finishing up")
+    n=findfirst(isequal(0), lags)
+    @inbounds (for z in axes(C,5)
+        for y_alt in axes(C,4)
+            for x_alt in axes(C,3)
+                C[:,:,x_alt, y_alt, z] .-= means[x_alt, y_alt, z] .* means[: ,:, n]
+                C[:,:,x_alt, y_alt, z] ./= stdevs[x_alt, y_alt, z] .* stdevs[:, :, n]
+            end
+        end
+    end)
+    return C
+end
+
 end
 
 module CudaNino

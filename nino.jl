@@ -75,9 +75,9 @@ function mean_air_data(A)
     size_A = size(A)
     out = Array{Float32}(undef, size_A[1], size_A[2], 365)
     @inbounds (
-        for i = 1:size_A[1]
-            for j = 1:size_A[2]
-                for k = 1:365
+        for i in 1:size_A[1]
+            for j in 1:size_A[2]
+                for k in 1:365
                     out[i, j, k] = mean(findmissing.(A[i, j, (4k-3):(4k)]))
                 end
             end
@@ -94,7 +94,7 @@ function get_data(; years = 1948:2021)
     close(A)
     # This is a bit silly but it should work
     data = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
-    for i = 1:length(years)
+    for i in 1:length(years)
         A = read_air_data(years[i])
         data[:, :, :, i] .= mean_air_data(read(A["air"])[:, 2:(end-1), :]) # Discard Leap Years (:
         close(A)
@@ -111,12 +111,12 @@ function get_anomaly(data; years = 1948:2021, radial_period = 4, scale = true)
 
     out = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
     @inbounds (
-        for i = 1:length(years)
+        for i in 1:length(years)
             local_period = intersect(1:length(years), (i-radial_period):(i+radial_period))
             t = Array{Task}(undef, size_A[1])
-            for j = 1:size_A[1]
-                t[j] = Threads.@spawn for k = 1:size_A[2]
-                    for l = 1:365
+            for j in 1:size_A[1]
+                t[j] = Threads.@spawn for k in 1:size_A[2]
+                    for l in 1:365
                         tmp = filter(x -> !isnan(x), data[j, k, l, local_period])
                         out[j, k, l, i] = (data[j, k, l, i] - mean(tmp)) / std(tmp)
                     end
@@ -135,7 +135,7 @@ function get_anomaly2(data; years = 1948:2021, radial_period = 4, scale = true)
     size_A = size(data)
 
     out = Array{Float32}(undef, size_A[1], size_A[2], 365, length(years))
-    for day = 1:365
+    for day in 1:365
         out[:, :, day, :] .=
             (data[:, :, day, :] .- mean(data[:, :, day, :]; dims = 3)) ./
             std(data[:, :, day, :]; dims = 3, corrected = false)
@@ -171,14 +171,14 @@ function c_i_j(data, is, js; lags = 50:350)
     C = Array{Float32}(undef, interior_points, exterior_points, length(lags))
 
     i_point_list = [(i, j) for i in is for j in js]
-    e_point_list = [(i, j) for i = 1:size_A[2] for j = 1:size_A[3]]
+    e_point_list = [(i, j) for i in 1:size_A[2] for j in 1:size_A[3]]
     e_point_list = setdiff(e_point_list, i_point_list)
 
     t = Array{Task}(undef, interior_points * exterior_points)
     c = 0
     @inbounds (
-        for j = 1:length(e_point_list)
-            for i = 1:length(i_point_list)
+        for j in 1:length(e_point_list)
+            for i in 1:length(i_point_list)
                 c += 1
                 x1 = i_point_list[i]
                 x2 = e_point_list[j]
@@ -205,25 +205,25 @@ function c_i_j2(data, is, js; lags = 150)
     C = Array{Float32}(undef, interior_points, exterior_points, lags * 2 + 1)
 
     i_point_list = [(i, j) for i in is for j in js]
-    e_point_list = [(i, j) for i = 1:size_A[2] for j = 1:size_A[3]]
+    e_point_list = [(i, j) for i in 1:size_A[2] for j in 1:size_A[3]]
     e_point_list = setdiff(e_point_list, i_point_list)
 
     t = Array{Task}(undef, interior_points * exterior_points * 2)
     c = 0
     @inbounds (
-        for j = 1:length(e_point_list)
-            for i = 1:length(i_point_list)
+        for j in 1:length(e_point_list)
+            for i in 1:length(i_point_list)
                 c += 1
                 x1 = i_point_list[i]
                 x2 = e_point_list[j]
-                t[c] = Threads.@spawn for d = 0:lags
+                t[c] = Threads.@spawn for d in 0:lags
                     C[i, j, 1+lags+d] = cor(
                         @view(data[200:(200+364), x1[1], x1[2]]),
                         @view(data[(200+d):(200+d+364), x2[1], x2[2]])
                     )
                 end
                 c += 1
-                t[c] = Threads.@spawn for d = 1:lags
+                t[c] = Threads.@spawn for d in 1:lags
                     C[i, j, 1+lags-d] = cor(
                         @view(data[200:(200+364), x2[1], x2[2]]),
                         @view(data[(200+d):(200+d+364), x1[1], x1[2]])
@@ -246,14 +246,14 @@ function c_i_j3(data, is, js; lags = 50:350)
     C = Array{Float32}(undef, interior_points, exterior_points, length(lags))
 
     i_point_list = [(i, j) for i in is for j in js]
-    e_point_list = [(i, j) for i = 1:size_A[2] for j = 1:size_A[3]]
+    e_point_list = [(i, j) for i in 1:size_A[2] for j in 1:size_A[3]]
     e_point_list = setdiff(e_point_list, i_point_list)
 
     t = Array{Task}(undef, interior_points * exterior_points)
     c = 0
     @inbounds (
-        for j = 1:length(e_point_list)
-            for i = 1:length(i_point_list)
+        for j in 1:length(e_point_list)
+            for i in 1:length(i_point_list)
                 c += 1
                 x1 = i_point_list[i]
                 x2 = e_point_list[j]
@@ -261,7 +261,7 @@ function c_i_j3(data, is, js; lags = 50:350)
                     C[i, j, :] .= crosscor(
                         @view(data[:, x1[1], x1[2]]),
                         @view(data[:, x2[1], x2[2]]),
-                        lags .- 200;,
+                        lags .- 200,
                     )
                 )
             end
@@ -282,25 +282,25 @@ function c_i_j4(data, is, js; lags = 150)
     C = Array{Float32}(undef, interior_points, exterior_points, lags * 2 + 1)
 
     i_point_list = [(i, j) for i in is for j in js]
-    e_point_list = [(i, j) for i = 1:size_A[2] for j = 1:size_A[3]]
+    e_point_list = [(i, j) for i in 1:size_A[2] for j in 1:size_A[3]]
     e_point_list = setdiff(e_point_list, i_point_list)
 
     t = Array{Task}(undef, interior_points * exterior_points * 2)
     c = 0
     @inbounds (
-        for j = 1:length(e_point_list)
-            for i = 1:length(i_point_list)
+        for j in 1:length(e_point_list)
+            for i in 1:length(i_point_list)
                 c += 1
                 x1 = i_point_list[i]
                 x2 = e_point_list[j]
-                t[c] = Threads.@spawn for d = 0:lags
+                t[c] = Threads.@spawn for d in 0:lags
                     C[i, j, 1+lags+d] = cross_correlation(
                         @view(data[200:(200+364), x1[1], x1[2]]),
                         @view(data[(200+d):(200+d+364), x2[1], x2[2]])
                     )
                 end
                 c += 1
-                t[c] = Threads.@spawn for d = 1:lags
+                t[c] = Threads.@spawn for d in 1:lags
                     C[i, j, 1+lags-d] = cross_correlation(
                         @view(data[200:(200+364), x2[1], x2[2]]),
                         @view(data[(200+d):(200+d+364), x1[1], x1[2]])
@@ -323,8 +323,8 @@ end
 
 function get_θ(C, size_C)
     θ = Array{Int64}(undef, size_C[1], size_C[2])
-    for i = 1:size_C[1]
-        for j = 1:size_C[2]
+    for i in 1:size_C[1]
+        for j in 1:size_C[2]
             θ[i, j] = findmax(abs, C[i, j, :])[2]
         end
     end
@@ -336,8 +336,8 @@ function in_weights(C, i_point_list, e_point_list, l_lon, l_lat, θ; lags = 50:3
 
     in_C = zeros(Float32, l_lon, l_lat)
 
-    for i = 1:size(e_point_list)[1]
-        for j = 1:size(i_point_list)[1]
+    for i in 1:size(e_point_list)[1]
+        for j in 1:size(i_point_list)[1]
 
             e_point = e_point_list[i, :]
 
@@ -422,10 +422,10 @@ function cu_sums!(sums, data, lags)
     z_step = gD.x
 
     @inbounds (
-        for x = x_initial:x_step:size(data, 2)
-            for y = y_initial:y_step:size(data, 3)
-                for z = z_inital:z_step:size(lags, 1)
-                    for i = lags[z]:(lags[z]+364)
+        for x in x_initial:x_step:size(data, 2)
+            for y in y_initial:y_step:size(data, 3)
+                for z in z_inital:z_step:size(lags, 1)
+                    for i in lags[z]:(lags[z]+364)
                         sums[z, x, y] += data[200+i, x, y]
                     end
                 end
@@ -451,10 +451,10 @@ function cu_sum2s!(sums, data, lags)
     z_step = gD.x
 
     @inbounds (
-        for x = x_initial:x_step:size(data, 2)
-            for y = y_initial:y_step:size(data, 3)
-                for z = z_inital:z_step:size(lags, 1)
-                    for i = lags[z]:(lags[z]+364)
+        for x in x_initial:x_step:size(data, 2)
+            for y in y_initial:y_step:size(data, 3)
+                for z in z_inital:z_step:size(lags, 1)
+                    for i in lags[z]:(lags[z]+364)
                         sums[z, x, y] += data[200+i, x, y]^2
                     end
                 end
@@ -479,9 +479,9 @@ function cu_final_1!(C, means, data, lags, n)
     z_step = gD.x
 
     @inbounds (
-        for x = x_initial:x_step:size(data, 2)
-            for y = y_initial:y_step:size(data, 3)
-                for z = z_inital:z_step:size(lags, 1)
+        for x in x_initial:x_step:size(data, 2)
+            for y in y_initial:y_step:size(data, 3)
+                for z in z_inital:z_step:size(lags, 1)
                     for x_alt in axes(data, 2)
                         for y_alt in axes(data, 3)
                             C[x, y, x_alt, y_alt, z] -=
@@ -510,9 +510,9 @@ function cu_final_2!(C, stdevs, data, lags, n)
     z_step = gD.x
 
     @inbounds (
-        for x = x_initial:x_step:size(data, 2)
-            for y = y_initial:y_step:size(data, 3)
-                for z = z_inital:z_step:size(lags, 1)
+        for x in x_initial:x_step:size(data, 2)
+            for y in y_initial:y_step:size(data, 3)
+                for z in z_inital:z_step:size(lags, 1)
                     for x_alt in axes(data, 2)
                         for y_alt in axes(data, 3)
                             C[x, y, x_alt, y_alt, z] /=
@@ -541,12 +541,12 @@ function cu_dots!(dots, data, lags)
     z_step = gD.x
 
     @inbounds (
-        for x = x_initial:x_step:size(data, 2)
-            for y = y_initial:y_step:size(data, 3)
-                for z = z_inital:z_step:size(lags, 1)
+        for x in x_initial:x_step:size(data, 2)
+            for y in y_initial:y_step:size(data, 3)
+                for z in z_inital:z_step:size(lags, 1)
                     for x_alt in axes(data, 2)
                         for y_alt in axes(data, 3)
-                            for i = 0:364
+                            for i in 0:364
                                 dots[x, y, x_alt, y_alt, z] +=
                                     data[200+i, x, y] * data[200+lags[z]+i, x_alt, y_alt]
                             end

@@ -25,16 +25,16 @@ function main()
     i_point_list = read(generated_data["i_point_list"])
 
     θ = Array{Int64}(undef, size_C[1], size_C[2])
-    for i = 1:size_C[1]
-        for j = 1:size_C[2]
+    for i in 1:size_C[1]
+        for j in 1:size_C[2]
             θ[i, j] = findmax(abs, C[i, j, :])[2]
         end
     end
 
     in_C = zeros(Float32, length(lon), length(lat))
 
-    for i = 1:size(e_point_list)[1]
-        for j = 1:size(i_point_list)[1]
+    for i in 1:size(e_point_list)[1]
+        for j in 1:size(i_point_list)[1]
 
             e_point = e_point_list[i, :]
 

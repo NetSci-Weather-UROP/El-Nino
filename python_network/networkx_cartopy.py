@@ -83,6 +83,26 @@ def adjacency(C, tolerance = 1):
 
 
 def make_graph(year = 1972, tolerance = 1):
+    """
+    Makes graph.
+
+    Parameters:
+    year:       The year for which the network is to be made
+    tolerance:  Determines how links are discarded according
+                to the weights. See adjacency_filter from
+                utils.py for more information.
+    
+    Returns:
+    G:          The graph object itself (NetworkX).
+    A_ij:       The raw weighted adjacency matrix that made
+                the graph G.
+    point_pos:  Dictionary of point locations to be
+                plotted over a cartopy map later (see docstring
+                above code for issues).
+    color_map:  A list to colour-code the nodes (see docstring
+                above code for issues).
+    """
+
     # set up directory to read data from parent directory
     basepath = path.dirname(__file__)
     filepath = path.abspath(path.join(basepath, "..",

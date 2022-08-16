@@ -15,6 +15,7 @@ Install Cartopy w. Conda:
 conda install -c conda-forge cartopy
 """
 
+from venv import create
 import networkx as nx
 import numpy as np
 import cartopy.crs as ccrs
@@ -122,7 +123,8 @@ def make_graph(year = 1972, tolerance = 1):
     A_ij, node_sum = adjacency(C, tolerance)
 
     # construct graph with weighted edges from A_ij
-    G = nx.from_numpy_matrix(A_ij, parallel_edges = False)
+    G = nx.from_numpy_matrix(A_ij, parallel_edges = False,
+                             create_using = nx.MultiGraph)
     print("Number of edges in graph: ", G.number_of_edges())
 
     """

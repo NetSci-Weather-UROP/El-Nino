@@ -329,7 +329,7 @@ function get_θ(C, size_C)
             θ[i, j] = findmax(abs, C[i, j, :])[2]
         end
     end
-    return 0
+    return θ
 end
 
 function in_weights(C, i_point_list, e_point_list, l_lon, l_lat, θ; lags = 50:350)

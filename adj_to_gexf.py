@@ -9,7 +9,7 @@ with open("adj", "rb") as f:
 with open("lat", "rb") as f:
     lat = np.load(f)
 
-with open("lat", "rb") as f:
+with open("lon", "rb") as f:
     lon = np.load(f)
 
 l_lat = len(lat)

@@ -12,7 +12,8 @@ export get_data,
     c_i_j3,
     c_i_j4,
     c_i_j_full_cpu,
-    in_weights
+    in_weights,
+	get_θ
 
 using HDF5, Dates, StatsBase, LoopVectorization
 

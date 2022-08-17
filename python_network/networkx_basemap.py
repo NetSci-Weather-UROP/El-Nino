@@ -108,7 +108,7 @@ def get_pos(map, T_in, T_out, lon, lat, node_sum):
     return point_pos
 
 
-def make_graph(year, tolerance):
+def make_graph(year, tolerance, save_to_files = False):
     """
     Makes graph.
 
@@ -223,10 +223,15 @@ def make_graph(year, tolerance):
 
     # show plot and save to file
     plt.show()
-    fig.savefig('test.svg')
-    fig.savefig('test.png', dpi = 1200)
+    
+    if save_to_files:
+        print("Saving to svg...")
+        fig.savefig('test.svg')
+        print("Saving to png...")
+        fig.savefig('test.png', dpi = 1200) 
+    print("DONE!")
 
     return G, A_ij, point_pos, color_map
 
 
-make_graph(1972, 2)
+make_graph(1972, 2, save_to_files = True)

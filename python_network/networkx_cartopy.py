@@ -1,7 +1,7 @@
 """
 Builds a NetworkX graph based on a given year's
 data and attempt to implement visualisation using
-Cartopy.
+Basemap.
 
 Working directory needs to be ./el-nino/python_network
 
@@ -10,18 +10,14 @@ Working directory needs to be ./el-nino/python_network
         - [networkx_cartopy.py]
     - [temp_data_1948_2021.npy]
     - [utils.py]
-
-Install Cartopy w. Conda:
-conda install -c conda-forge cartopy
 """
 
 from venv import create
 import networkx as nx
 import numpy as np
-import cartopy.crs as ccrs
-from cartopy.io import shapereader as shpreader
-from pyvis.network import Network
 import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
+import matplotlib
 import sys
 import inspect
 from os import path  # wacky method - crutches...
@@ -76,11 +72,40 @@ def adjacency(C, tolerance = 1):
     A_ij[0 : np.shape(C_link)[0],
         np.shape(C_link)[0] : node_sum] = C_link
     A_ij[np.shape(C_link)[0] : node_sum,
-        0 : np.shape(C_link)[0]] = C_link.transpose()
+         0 : np.shape(C_link)[0]] = C_link.transpose()
     print("Dimension of A_ij adjacency matrix",
         np.shape(A_ij))
     
     return A_ij, node_sum
+
+
+def get_pos(map, T_in, T_out, lon, lat, node_sum):
+    """
+    Return point_pos: dictionary of point locations to be
+    plotted over a Basemap map (defined in make_graph).
+    
+    Note: the positions are scaled according to the
+    projection of the map.
+    """
+    
+    lats = []
+    lons = []
+    for point in T_in:
+        coord1, coord2 = point[-2].astype(int), point[-1].astype(int)
+        lons.append(lon[coord1])
+        lats.append(lat[coord2])
+    for point in T_out:
+        coord1, coord2 = point[-2].astype(int), point[-1].astype(int)
+        lons.append(lon[coord1])
+        lats.append(lat[coord2])
+    
+    map_x, map_y = map(lons, lats)
+
+    point_pos = {}
+    for i in range(node_sum):
+        point_pos.update({i : (map_x[i], map_y[i])})
+    
+    return point_pos
 
 
 def make_graph(year = 1972, tolerance = 1):
@@ -97,9 +122,8 @@ def make_graph(year = 1972, tolerance = 1):
     G:          The graph object itself (NetworkX).
     A_ij:       The raw weighted adjacency matrix that made
                 the graph G.
-    point_pos:  Dictionary of point locations to be
-                plotted over a cartopy map later (see docstring
-                above code for issues).
+    point_pos:  Dictionary of point locations scaled to the
+                Basemap map for plotting.
     color_map:  A list to colour-code the nodes (see docstring
                 above code for issues).
     """
@@ -126,71 +150,84 @@ def make_graph(year = 1972, tolerance = 1):
     G = nx.from_numpy_matrix(A_ij, parallel_edges = False)
     print("Number of edges in graph: ", G.number_of_edges())
 
-    """
-    Construct point_pos: dictionary of point locations to be
-    plotted over a cartopy map later.
+    # initialise map
+    map = Basemap(projection = 'robin',
+                  lon_0 = -178.25,
+                  lat_0 = 0,
+                  lat_ts= 0,
+                  resolution='i',  # intermediate resolution
+    )
 
-    Note: the order of lon and lat needs to be swapped here.
-    The nodes are identified with a number, e.g.
-    53 : [lon, lat] in point_pos refers to the node number 53
-    (a node in the el-nino basin as it is within the first
-    57 nodes) and its location.
-
-    Issues: it just does not really work yet. The points would
-    be placed correctly but the networkx plotting of edges
-    won't follow with the new node positions...
+    # get node positions to plot over basemap
+    point_pos = get_pos(map, T_in, T_out, lon, lat, node_sum)
+    
     """
-    point_pos = {}
-    i = 0
-    for point in T_in:
-        coord1, coord2 = point[-2].astype(int), point[-1].astype(int)
-        # I am attempting to use the following method to line up the
-        # points on the map (see docstring for issue)
-        point_pos.update({i:[(lon[coord1] + 178.25) % 360, lat[coord2]]})
-        i += 1
-    for point in T_out:
-        coord1, coord2 = point[-2].astype(int), point[-1].astype(int)
-        point_pos.update({i:[(lon[coord1] + 178.25) % 360, lat[coord2]]})
-        i += 1
-
-    """
-    Constructs a colour map to colour-code the in and out nodes.
-    Currently not used in this script - it would be a lot more useful
-    if this were a dictionary, not a list. There are ways
-    around it though.
+    Constructs a colour map & a node size map for the in and out nodes.
+    It would be a lot more useful if this were a dictionary, not a list. 
+    There are ways around it though.
     """
     color_map = []
+    size_map = []
     for node in G:
         if node < 57:
-            color_map.append('red')
+            color_map.append('indigo')
+            size_map.append(8)
         else: 
-            color_map.append('blue')
+            color_map.append('grey')
+            size_map.append(0)
 
     # comment out when appropriate (subgraph of only 1 in-node)
     G = G.subgraph(np.arange(56, node_sum))
+    color_map = color_map[56:node_sum]
+    size_map = size_map[56:node_sum]
 
-    # draw background map with cartopy
-    crs = ccrs.PlateCarree(central_longitude = 178.25)
+    # get arrays of edges and weights separately
+    edges, weights = zip(*nx.get_edge_attributes(G, "weight").items())
+    edges = np.array(edges)
+    weights = np.array(weights)
+
+    # matplotlib figure
     fig, ax = plt.subplots(
-        1, 1, figsize=(200, 200),
-        subplot_kw = dict(projection = crs))
-    ax.coastlines()
-    ax.set_global()
+        1, 1, figsize = (200, 200))
 
-    # draw graph with networkx over cartopy
+    # set up edge colouring
+    cmap = plt.cm.coolwarm  # use appropriate matplotlib colour-maps
+    vmin = - abs(max(weights, key = abs))
+    vmax = - vmin
+    print("vmin, vmax used for cmap:", vmin, vmax)
+    sm = plt.cm.ScalarMappable(cmap = cmap, 
+                               norm = plt.Normalize(vmin=vmin, 
+                                                    vmax=vmax))
+    sm.set_array([])  # set colour bar
+
+    # draw graph over map projection
     nx.draw_networkx(G, ax = ax,
-                     font_size = 16,
-                     alpha = 0.8,
-                     width = 0.5,
-                     node_size = 8,
                      with_labels = False,
-                     pos = point_pos
+                     font_size = 16,
+                     alpha = 0.9,
+                     width = 0.5,
+                     node_size = size_map,  
+                     node_color = color_map,               
+                     pos = point_pos,
+                     edge_color = weights,
+                     edge_cmap = cmap,
+                     vmin = vmin,
+                     vmax = vmax,
     )
+    
+    # misc. settings
+    map.drawcoastlines()
+    map.drawcountries()
+    map.drawparallels(np.arange(-90,90,30),labels=[1,0,0,0])
+    map.drawmeridians(np.arange(0,360,60),labels=[0,0,0,1])
+    cbar = plt.colorbar(sm)  # draw colour bar
 
+    # show plot and save to file
     plt.show()
-    fig.savefig('test.png')
+    fig.savefig('test.svg')
+    fig.savefig('test.png', dpi = 1200)
 
     return G, A_ij, point_pos, color_map
 
 
-make_graph(1972, 2)
+make_graph(1972, 2.5)

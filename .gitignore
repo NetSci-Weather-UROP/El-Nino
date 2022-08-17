@@ -10,3 +10,4 @@ cross_correlation_standard_temps.mkv
 *.npy
 *.png
 *.svg
+*.pyc

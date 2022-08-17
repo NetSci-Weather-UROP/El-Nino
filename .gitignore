@@ -11,3 +11,5 @@ cross_correlation_standard_temps.mkv
 *.png
 *.svg
 *.pyc
+*.gefx
+*.xml

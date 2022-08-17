@@ -108,7 +108,7 @@ def get_pos(map, T_in, T_out, lon, lat, node_sum):
     return point_pos
 
 
-def make_graph(year = 1972, tolerance = 1):
+def make_graph(year, tolerance):
     """
     Makes graph.
 
@@ -140,7 +140,6 @@ def make_graph(year = 1972, tolerance = 1):
         lon = np.load(f)
     
     # get year data and calculate adjacency matrix A_ij
-    year = 1972
     print("Computing data for year:", year)
     C, T_in, T_out = year_series(T, lat, lon, year)
     print("Dimension of C matrix:", np.shape(C))
@@ -230,4 +229,4 @@ def make_graph(year = 1972, tolerance = 1):
     return G, A_ij, point_pos, color_map
 
 
-make_graph(1972, 2.5)
+make_graph(1972, 2)

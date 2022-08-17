@@ -301,6 +301,8 @@ def adjacency_filter(C, tolerance=1):
     weights = (C[:,:,0]-C[:,:,2])/C[:,:,3]
     mu = np.mean(weights)
     sd = np.std(weights)
+    print("mu:", mu, "sd:", sd, "tolerance:", tolerance)
+    print("Zero-ed range:", [mu-tolerance*sd, mu+tolerance*sd])
     filtered_weights = np.copy(weights)
     filtered_weights *= (np.abs(weights) > mu+tolerance*sd)
     return filtered_weights

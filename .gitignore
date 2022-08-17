@@ -9,3 +9,4 @@ temp_data_1948_2021.npy
 cross_correlation_standard_temps.mkv
 *.npy
 *.png
+*.svg

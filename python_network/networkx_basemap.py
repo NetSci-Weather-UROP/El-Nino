@@ -176,9 +176,9 @@ def make_graph(year, tolerance, save_to_files = False):
             size_map.append(0)
 
     # comment out when appropriate (subgraph of only 1 in-node)
-    G = G.subgraph(np.arange(56, node_sum))
-    color_map = color_map[56:node_sum]
-    size_map = size_map[56:node_sum]
+    # G = G.subgraph(np.arange(56, node_sum))
+    # color_map = color_map[56:node_sum]
+    # size_map = size_map[56:node_sum]
 
     # get arrays of edges and weights separately
     edges, weights = zip(*nx.get_edge_attributes(G, "weight").items())
@@ -234,4 +234,4 @@ def make_graph(year, tolerance, save_to_files = False):
     return G, A_ij, point_pos, color_map
 
 
-make_graph(1972, 2, save_to_files = True)
+# make_graph(1972, 2, save_to_files = True)

@@ -31,4 +31,11 @@ parentdir = path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 from utils import *  # import utils
 
-make_graph(1972, 2)
+# make relavent graph (see networkx_basemap.py)
+year = 1972
+tolerance = 2
+G, A_ij, point_pos, color_map = make_graph(year, 
+                                           tolerance)
+
+# save to GEXF
+nx.write_gexf(G, path = f"{year}_tol{tolerance}.gexf")

@@ -82,7 +82,8 @@ def adjacency(C, tolerance = 1):
 def get_pos(map, T_in, T_out, lon, lat, node_sum):
     """
     Return point_pos: dictionary of point locations to be
-    plotted over a Basemap map (defined in make_graph).
+    plotted over a Basemap map (defined in make_graph) 
+    and its unscaled original (lon + lat)
     
     Note: the positions are scaled according to the
     projection of the map.
@@ -102,10 +103,12 @@ def get_pos(map, T_in, T_out, lon, lat, node_sum):
     map_x, map_y = map(lons, lats)
 
     point_pos = {}
+    point_pos_unscaled = {}
     for i in range(node_sum):
         point_pos.update({i : (map_x[i], map_y[i])})
+        point_pos_unscaled.update({i : (lons[i], lats[i])})
     
-    return point_pos
+    return point_pos, point_pos_unscaled
 
 
 def make_graph(year, tolerance, save_to_files = False):
@@ -122,6 +125,9 @@ def make_graph(year, tolerance, save_to_files = False):
     G:          The graph object itself (NetworkX).
     A_ij:       The raw weighted adjacency matrix that made
                 the graph G.
+    point_pos
+    _unscaled:  Dictionary of point locations not scaled to 
+                the Basemap.
     point_pos:  Dictionary of point locations scaled to the
                 Basemap map for plotting.
     color_map:  A list to colour-code the nodes (see docstring
@@ -158,7 +164,8 @@ def make_graph(year, tolerance, save_to_files = False):
     )
 
     # get node positions to plot over basemap
-    point_pos = get_pos(map, T_in, T_out, lon, lat, node_sum)
+    point_pos, point_pos_unscaled = get_pos(map, T_in, T_out, 
+                                            lon, lat, node_sum)
     
     """
     Constructs a colour map & a node size map for the in and out nodes.
@@ -231,7 +238,7 @@ def make_graph(year, tolerance, save_to_files = False):
         fig.savefig('test.png', dpi = 1200) 
     print("DONE!")
 
-    return G, A_ij, point_pos, color_map
+    return G, A_ij, point_pos, point_pos_unscaled, color_map
 
 
 # make_graph(1972, 2, save_to_files = True)

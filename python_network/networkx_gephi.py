@@ -34,8 +34,11 @@ from utils import *  # import utils
 # make relavent graph (see networkx_basemap.py)
 year = 1972
 tolerance = 2
-G, A_ij, point_pos, color_map = make_graph(year, 
-                                           tolerance)
+G, A_ij, point_pos, point_pos_unscaled, color_map = make_graph(year, 
+                                                               tolerance)
+
+for i in range(np.shape(A_ij)[0]):
+    G.nodes[i]['pos'] = list(point_pos[i])
 
 # save to GEXF
 nx.write_gexf(G, path = f"{year}_tol{tolerance}.gexf")

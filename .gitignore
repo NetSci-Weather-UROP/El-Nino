@@ -13,3 +13,4 @@ cross_correlation_standard_temps.mkv
 *.pyc
 *.gefx
 *.xml
+*.gexf

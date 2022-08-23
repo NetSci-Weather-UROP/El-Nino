@@ -111,7 +111,8 @@ def get_pos(map, T_in, T_out, lon, lat, node_sum):
     return point_pos, point_pos_unscaled
 
 
-def make_graph(year, tolerance, save_to_files = False):
+def make_graph(year, tolerance, every_pair = False, 
+               save_to_files = False):
     """
     Makes graph.
 
@@ -145,9 +146,15 @@ def make_graph(year, tolerance, save_to_files = False):
         lat = np.load(f)
         lon = np.load(f)
     
-    # get year data and calculate adjacency matrix A_ij
-    print("Computing data for year:", year)
-    C, T_in, T_out = year_series(T, lat, lon, year)
+    if not every_pair:
+        # get year data and calculate adjacency matrix A_ij
+        print("Computing data for year:", year)
+        C, T_in, T_out = year_series(T, lat, lon, year)
+    else:
+        print("Computing data for year 1972",  
+              "(this cannot be changed currently due",
+              "to data availability (see nino.jl).")
+    
     print("Dimension of C matrix:", np.shape(C))
     A_ij, node_sum = adjacency(C, tolerance)
 

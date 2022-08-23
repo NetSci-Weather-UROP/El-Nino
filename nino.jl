@@ -13,7 +13,8 @@ export get_data,
     c_i_j4,
     c_i_j_full_cpu,
     in_weights,
-	get_θ
+	get_θ,
+	adjacency
 
 using HDF5, Dates, StatsBase, LoopVectorization
 
@@ -399,6 +400,22 @@ function c_i_j_full_cpu(data; lags = (-200):200, zero_index = 200)
         end
     )
     return C
+end
+
+function adjacency(data; lags=(-150):150)
+    size_A = size(data)
+    out = Array{Float16}(undef, size_A[1], size_A[2], size_A[3], size_A[4])
+    for j_alt in axes(data, 4)
+        for i_alt in axes(data,3)
+            for j in axes(data, 2)
+                for i in axes(data,1)
+                    θ = findmax(abs, data[i,j,i_alt,j_alt,:])[2]
+                    out[i, j, i_alt, j_alt] = data[i, j, i_alt, j_alt, θ] * H(lags[θ]) * (abs(lags[θ]) <= 150)
+                end
+            end
+        end
+    end
+    return out
 end
 
 end

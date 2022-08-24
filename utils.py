@@ -205,7 +205,23 @@ def maximod(x, axis=None):
     return pos * (pos > -neg) + neg * (pos < -neg)
 
 
-def comp_c(T_in, T_out, tau_max=200):
+def shuffle_along(X, axis=0, inline=False):
+    """
+    Shuffle arrays perpendicular to `axis`.
+    
+    If `inline` then modifies `X`
+    """
+    if not inline:
+        X = X.copy()
+    if axis == 0:
+        [np.random.shuffle(x) for x in X]
+    if axis == 1:
+        [np.random.shuffle(x) for x in X.T]
+    if not inline:
+        return X
+
+
+def comp_c(T_in, T_out, tau_max=200, shuffle=False, get_temp=False):
     """
     Compute the maximum of the correlations, the respective offset, mean and
     standard deviation over all offsets.
@@ -218,6 +234,11 @@ def comp_c(T_in, T_out, tau_max=200):
     # temporary array holding corrcoefs for all offsets
     temp = np.empty([n,m,2*tau_max+1])
     t_in = T_in[:,tau_max:tau_max+days]
+    
+    # for significance check
+    if shuffle:
+        shuffle_along(t_in[:,:-2], inline=True)
+        shuffle_along(T_out[:,:-2], inline=True)
 
     # iterate through all offsets
     for tau in range(-tau_max, tau_max+1):
@@ -240,6 +261,9 @@ def comp_c(T_in, T_out, tau_max=200):
     # standard deviation over  all theta
     C[:,:,3] = np.std(temp[:,:,tau_max:tau_max+150], axis=2)
 
+    if get_temp:
+        return C, temp
+    
     return C
 
 

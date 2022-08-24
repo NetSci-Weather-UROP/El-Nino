@@ -14,7 +14,7 @@ with open("lon", "rb") as f:
 l_lat = len(lat)
 l_lon = len(lon)
 
-G = nx.Graph()
+G = nx.DiGraph()
 
 r = 15
 r_lat = range(r, l_lat - r, r+1)
